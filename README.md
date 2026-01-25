@@ -17,7 +17,9 @@ With specific backends:
 ```bash
 uv add nwgrep[pandas]  # pandas support
 uv add nwgrep[polars]  # polars support
-uv add nwgrep[all]     # all backends
+uv add nwgrep[dask]    # dask support
+uv add nwgrep[cudf]    # cuDF (GPU) support
+uv add nwgrep[all]     # all major backends
 ```
 
 Or using `pip`:
