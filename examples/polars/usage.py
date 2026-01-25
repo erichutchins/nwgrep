@@ -7,8 +7,8 @@ from nwgrep import nwgrep, register_grep_accessor
 
 # 1. Functional usage with Polars DataFrame
 df = pl.DataFrame({
-    "name": ["Alice", "Bob", "Charlie"],
-    "status": ["active", "inactive", "active"],
+    "name": ["Alice", "Bob", "Eve"],
+    "status": ["active", "locked", "active"],
 })
 
 print("--- Eager DataFrame via nwgrep(...) ---")

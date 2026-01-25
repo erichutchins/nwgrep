@@ -97,28 +97,28 @@ def nwgrep(
     >>> import narwhals as nw
     >>> import pandas as pd
     >>> df = pd.DataFrame({
-    ...     "name": ["Alice", "Bob", "Charlie"],
-    ...     "status": ["active", "inactive", "active"],
+    ...     "name": ["Alice", "Bob", "Eve"],
+    ...     "status": ["active", "locked", "active"],
     ... })
     >>> nwgrep(df, "active")  # Find rows with "active" in any column
-       name   status
+       name  status
     0  Alice  active
-    2  Charlie active
+    2    Eve  active
 
     >>> # Works great with .pipe()
     >>> df.pipe(nwgrep, "active")
-       name   status
+       name  status
     0  Alice  active
-    2  Charlie active
+    2    Eve  active
 
     >>> nwgrep(df, "active", invert=True)  # Rows without "active"
-      name    status
-    1  Bob  inactive
+      name  status
+    1  Bob  locked
 
     >>> nwgrep(df, ["Alice", "Bob"])  # Multiple patterns
-       name    status
-    0  Alice   active
-    1  Bob  inactive
+        name  status
+    0  Alice  active
+    1    Bob  locked
     """
     # Detect if we already have a Narwhals object
     is_narwhals = isinstance(df, (nw.DataFrame, nw.LazyFrame))

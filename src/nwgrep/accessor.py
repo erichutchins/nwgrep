@@ -32,9 +32,9 @@ class GrepAccessor:
         >>> import pandas as pd
         >>> from nwgrep import register_grep_accessor
         >>> register_grep_accessor()
-        >>> df = pd.DataFrame({"name": ["Alice", "Bob"], "status": ["active", "inactive"]})
+        >>> df = pd.DataFrame({"name": ["Alice", "Bob"], "status": ["active", "locked"]})
         >>> df.grep("active")
-            name   status
+            name  status
         0  Alice  active
         """
         from nwgrep.core import nwgrep
