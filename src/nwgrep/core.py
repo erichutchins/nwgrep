@@ -25,11 +25,7 @@ def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list
 
 
 def _build_match_expr(
-    search_cols: list[str],
-    patterns: list[str],
-    *,
-    case_sensitive: bool,
-    regex: bool,
+    search_cols: list[str], patterns: list[str], *, case_sensitive: bool, regex: bool
 ) -> list[nw.Expr]:
     """Build matching expressions for each pattern."""
     match_exprs = []
@@ -96,10 +92,9 @@ def nwgrep(
     --------
     >>> import narwhals as nw
     >>> import pandas as pd
-    >>> df = pd.DataFrame({
-    ...     "name": ["Alice", "Bob", "Eve"],
-    ...     "status": ["active", "locked", "active"],
-    ... })
+    >>> df = pd.DataFrame(
+    ...     {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    ... )
     >>> nwgrep(df, "active")  # Find rows with "active" in any column
        name  status
     0  Alice  active

@@ -11,7 +11,6 @@ from narwhals.compliant import (
 )
 
 if TYPE_CHECKING:
-
     from narwhals.utils import Version
 
 

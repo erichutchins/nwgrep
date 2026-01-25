@@ -6,10 +6,9 @@ from nwgrep import nwgrep
 
 
 def test_basic_search() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["active", "locked", "active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    )
 
     result = nwgrep(df, "active")
     assert len(result) == 2
@@ -18,20 +17,18 @@ def test_basic_search() -> None:
 
 
 def test_case_insensitive() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["ACTIVE", "locked", "Active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["ACTIVE", "locked", "Active"]}
+    )
 
     result = nwgrep(df, "active", case_sensitive=False)
     assert len(result) == 2
 
 
 def test_invert_match() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["active", "locked", "active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    )
 
     result = nwgrep(df, "active", invert=True)
     assert len(result) == 1
@@ -39,39 +36,37 @@ def test_invert_match() -> None:
 
 
 def test_multiple_patterns() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["active", "locked", "active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    )
 
     result = nwgrep(df, ["Alice", "Bob"])
     assert len(result) == 2
 
 
 def test_specific_columns() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["active", "locked", "active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    )
 
     result = nwgrep(df, "active", columns=["status"])
     assert len(result) == 2
 
 
 def test_regex_search() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "email": ["alice@test.com", "bob@example.com", "eve@test.com"],
-    })
+    df = pd.DataFrame(
+        {
+            "name": ["Alice", "Bob", "Eve"],
+            "email": ["alice@test.com", "bob@example.com", "eve@test.com"],
+        }
+    )
 
     result = nwgrep(df, r".*@test\.com", regex=True)
     assert len(result) == 2
 
 
 def test_whole_word() -> None:
-    df = pd.DataFrame({
-        "text": ["activate", "active", "actor"],
-    })
+    df = pd.DataFrame({"text": ["activate", "active", "actor"]})
 
     result = nwgrep(df, "active", whole_word=True)
     assert len(result) == 1
@@ -79,10 +74,9 @@ def test_whole_word() -> None:
 
 
 def test_null_handling() -> None:
-    df = pd.DataFrame({
-        "name": ["Alice", None, "Eve"],
-        "status": ["active", "locked", None],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", None, "Eve"], "status": ["active", "locked", None]}
+    )
 
     result = nwgrep(df, "active")
     assert len(result) == 1

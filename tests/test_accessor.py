@@ -10,10 +10,9 @@ pd = pytest.importorskip("pandas")
 def test_pandas_grep_accessor() -> None:
     register_grep_accessor()
 
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["active", "locked", "active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    )
 
     # Test accessor is registered
     assert hasattr(df, "grep")
@@ -30,10 +29,9 @@ def test_pandas_grep_accessor() -> None:
 def test_pandas_grep_specific_columns() -> None:
     register_grep_accessor()
 
-    df = pd.DataFrame({
-        "name": ["Alice", "Bob", "Eve"],
-        "status": ["active", "locked", "active"],
-    })
+    df = pd.DataFrame(
+        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    )
 
     result = df.grep("active", columns=["status"])
     assert len(result) == 2
@@ -42,9 +40,7 @@ def test_pandas_grep_specific_columns() -> None:
 def test_pandas_grep_regex() -> None:
     register_grep_accessor()
 
-    df = pd.DataFrame({
-        "email": ["alice@test.com", "bob@example.com", "eve@test.com"],
-    })
+    df = pd.DataFrame({"email": ["alice@test.com", "bob@example.com", "eve@test.com"]})
 
     result = df.grep(r".*@test\.com", regex=True)
     assert len(result) == 2

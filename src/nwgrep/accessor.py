@@ -32,7 +32,9 @@ class GrepAccessor:
         >>> import pandas as pd
         >>> from nwgrep import register_grep_accessor
         >>> register_grep_accessor()
-        >>> df = pd.DataFrame({"name": ["Alice", "Bob"], "status": ["active", "locked"]})
+        >>> df = pd.DataFrame(
+        ...     {"name": ["Alice", "Bob"], "status": ["active", "locked"]}
+        ... )
         >>> df.grep("active")
             name  status
         0  Alice  active
@@ -98,4 +100,3 @@ def register_grep_accessor() -> None:
     except (ImportError, AttributeError):
         # polars.api might not exist in older versions
         pass
-
