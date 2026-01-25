@@ -138,7 +138,7 @@ def _output_results(result: FrameT, args: argparse.Namespace) -> None:
             return
 
     # Collect results for other formats or if streaming is not available
-    result_df = result.collect() if hasattr(result, "collect") else result
+    result_df = result.collect() if isinstance(result, nw.LazyFrame) else result
 
     # Limit rows if requested
     if args.max_rows:
