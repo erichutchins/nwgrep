@@ -5,11 +5,13 @@ import pandas as pd
 from nwgrep import nwgrep, register_grep_accessor
 
 # 1. Using nwgrep via .pipe() (Recommended for clean functional chains)
-df = pd.DataFrame({
-    "name": ["Alice", "Bob", "Charlie"],
-    "status": ["active", "inactive", "active"],
-    "notes": ["loves narwhals", "prefers pandas", "active contributor"],
-})
+df = pd.DataFrame(
+    {
+        "name": ["Alice", "Bob", "Eve"],
+        "status": ["active", "locked", "active"],
+        "notes": ["loves narwhals", "prefers pandas", "active contributor"],
+    }
+)
 
 print("--- Filtered using .pipe(nwgrep, ...) ---")
 # Search for 'active' in any column

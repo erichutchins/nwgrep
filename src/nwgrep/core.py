@@ -25,11 +25,7 @@ def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list
 
 
 def _build_match_expr(
-    search_cols: list[str],
-    patterns: list[str],
-    *,
-    case_sensitive: bool,
-    regex: bool,
+    search_cols: list[str], patterns: list[str], *, case_sensitive: bool, regex: bool
 ) -> list[nw.Expr]:
     """Build matching expressions for each pattern."""
     match_exprs = []
@@ -96,40 +92,36 @@ def nwgrep(
     --------
     >>> import narwhals as nw
     >>> import pandas as pd
-    >>> df = pd.DataFrame({
-    ...     "name": ["Alice", "Bob", "Charlie"],
-    ...     "status": ["active", "inactive", "active"],
-    ... })
+    >>> df = pd.DataFrame(
+    ...     {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    ... )
     >>> nwgrep(df, "active")  # Find rows with "active" in any column
-       name   status
+       name  status
     0  Alice  active
-    2  Charlie active
+    2    Eve  active
 
     >>> # Works great with .pipe()
     >>> df.pipe(nwgrep, "active")
-       name   status
+       name  status
     0  Alice  active
-    2  Charlie active
+    2    Eve  active
 
     >>> nwgrep(df, "active", invert=True)  # Rows without "active"
-      name    status
-    1  Bob  inactive
+      name  status
+    1  Bob  locked
 
     >>> nwgrep(df, ["Alice", "Bob"])  # Multiple patterns
-       name    status
-    0  Alice   active
-    1  Bob  inactive
+        name  status
+    0  Alice  active
+    1    Bob  locked
     """
     # Detect if we already have a Narwhals object
-    is_narwhals = isinstance(df, (nw.DataFrame, nw.LazyFrame))
-
-    # Convert to narwhals lazy frame for efficient processing
-    if is_narwhals:
-        # result_is_lazy is True if the input was already a LazyFrame
+    if isinstance(df, (nw.DataFrame, nw.LazyFrame)):
+        is_narwhals = True
         result_is_lazy = isinstance(df, nw.LazyFrame)
         df_nw = df.lazy()
     else:
-        # For native, detect if it's lazy by wrapping it first
+        is_narwhals = False
         nw_temp = nw.from_native(df)
         result_is_lazy = isinstance(nw_temp, nw.LazyFrame)
         df_nw = nw_temp.lazy()
@@ -144,7 +136,10 @@ def nwgrep(
         # No searchable columns, return empty or full based on invert
         result = df_nw.filter(nw.lit(invert))
         if is_narwhals:
-            return result if result_is_lazy else result.collect()
+            final_result: Any = result if result_is_lazy else result.collect()
+            from typing import cast
+
+            return cast("FrameT", final_result)
         return nw.to_native(result if result_is_lazy else result.collect())
 
     # Adjust pattern for whole word matching
@@ -175,9 +170,10 @@ def nwgrep(
 
     # Return as Narwhals if input was Narwhals
     if is_narwhals:
-        # We can return our own compliant frame if we wanted to follow the protocol strictly
-        # But returning Narwhals' own frames is better for compatibility.
-        return result if result_is_lazy else result.collect()
+        final_result_nw: Any = result if result_is_lazy else result.collect()
+        from typing import cast
+
+        return cast("FrameT", final_result_nw)
 
     # Otherwise return as native
     return nw.to_native(result if result_is_lazy else result.collect())
