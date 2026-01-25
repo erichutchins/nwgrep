@@ -2,7 +2,9 @@
 
 Grep-like tool for dataframes that works with pandas, polars, and any other backend supported by [Narwhals](https://narwhals-dev.github.io/narwhals/).
 
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude](https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=fff)](https://claude.ai)
 [![Gemini](https://img.shields.io/badge/Gemini-8E75FF?logo=googlegemini&logoColor=fff)](https://antigravity.google)
 
@@ -36,7 +38,7 @@ from nwgrep import nwgrep
 import pandas as pd
 
 df = pd.DataFrame({
-    "name": ["Alice", "Bob", "Eve"]  ,
+    "name": ["Alice", "Bob", "Eve"],
     "status": ["active", "locked", "active"],
 })
 
@@ -77,7 +79,7 @@ import pandas as pd
 register_grep_accessor()
 
 df = pd.DataFrame({
-    "name": ["Alice", "Bob", "Eve"]  ,
+    "name": ["Alice", "Bob", "Eve"],
     "status": ["active", "locked", "active"],
 })
 
@@ -96,7 +98,7 @@ from nwgrep import register_grep_accessor
 register_grep_accessor()
 
 df = pl.DataFrame({
-    "name": ["Alice", "Bob", "Eve"]  ,
+    "name": ["Alice", "Bob", "Eve"],
     "status": ["active", "locked", "active"],
 })
 
