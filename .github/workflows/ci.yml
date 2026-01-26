@@ -15,6 +15,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        exclude:
+          # Python 3.13+ has numpy compatibility issues on Windows
+          - os: windows-latest
+            python-version: "3.13"
+          - os: windows-latest
+            python-version: "3.14"
 
     steps:
       - uses: actions/checkout@v6
@@ -98,7 +104,7 @@ jobs:
               uv sync --extra pandas
               ;;
             polars)
-              uv sync --extra polars --extra pyarrow
+              uv sync --extra polars --extra pyarrow --extra pandas
               ;;
             pyarrow)
               uv sync --extra pyarrow --extra pandas
