@@ -434,7 +434,7 @@ name = "cuda-bindings"
 version = "12.9.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "python_full_version >= '3.10'" },
+    { name = "cuda-pathfinder", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/3a/971ec4b608b89ce5817b8105fc71d7eef7bada022fe72f98c5e59849094b/cuda_bindings-12.9.5-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ecea500213a917685fcf64cee8b96f02d35258920fe5f4deec6cbfaf94ff2198", size = 15621419, upload-time = "2025-12-18T16:30:49.81Z" },
@@ -465,7 +465,7 @@ name = "cuda-core"
 version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/0e/3a56719103a73476ed24282d5ba6a953e3789e2acbd7c75c603015538134/cuda_core-0.3.2-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7a2a1f7e96e68c0bbc710592e78ca09c951afc10238c739482e265da1e6ea102", size = 2881342, upload-time = "2025-08-07T03:40:58.409Z" },
@@ -498,7 +498,7 @@ name = "cuda-python"
 version = "12.9.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-bindings", marker = "python_full_version >= '3.10'" },
+    { name = "cuda-bindings", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/02/ce79a804a2d6ee7dc2d1637b75b7c3f01eb90a796915d4d3a1ac42e2d6e6/cuda_python-12.9.5-py3-none-any.whl", hash = "sha256:6fbbb3be2ab617d8269ad83e5fe9d748b1da4c5e0f79257a3296408a70766b39", size = 7596, upload-time = "2025-12-18T16:45:15.973Z" },
@@ -514,10 +514,10 @@ wheels = [
 
 [package.optional-dependencies]
 nvcc = [
-    { name = "nvidia-cuda-nvcc-cu12", marker = "(python_full_version >= '3.10' and sys_platform == 'linux') or (python_full_version >= '3.10' and sys_platform == 'win32')" },
+    { name = "nvidia-cuda-nvcc-cu12", marker = "(python_full_version >= '3.10' and python_full_version < '3.14' and sys_platform == 'linux') or (python_full_version >= '3.10' and python_full_version < '3.14' and sys_platform == 'win32')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "(python_full_version >= '3.10' and sys_platform == 'linux') or (python_full_version >= '3.10' and sys_platform == 'win32')" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "(python_full_version >= '3.10' and python_full_version < '3.14' and sys_platform == 'linux') or (python_full_version >= '3.10' and python_full_version < '3.14' and sys_platform == 'win32')" },
 ]
 
 [[package]]
@@ -525,23 +525,23 @@ name = "cudf-cu12"
 version = "25.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cachetools", marker = "python_full_version >= '3.10'" },
-    { name = "cuda-python", marker = "python_full_version >= '3.10'" },
-    { name = "cuda-toolkit", extra = ["nvcc", "nvrtc"], marker = "python_full_version >= '3.10'" },
-    { name = "cupy-cuda12x", marker = "python_full_version >= '3.10'" },
-    { name = "fsspec", version = "2026.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "libcudf-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "numba", marker = "python_full_version >= '3.10'" },
-    { name = "numba-cuda", extra = ["cu12"], marker = "python_full_version >= '3.10'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nvtx", marker = "python_full_version >= '3.10'" },
-    { name = "packaging", marker = "python_full_version >= '3.10'" },
-    { name = "pandas", marker = "python_full_version >= '3.10'" },
-    { name = "pyarrow", version = "23.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and platform_machine == 'aarch64') or (python_full_version >= '3.10' and platform_machine == 'x86_64')" },
-    { name = "pylibcudf-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "rich", marker = "python_full_version >= '3.10'" },
-    { name = "rmm-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.10'" },
+    { name = "cachetools", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "cuda-python", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "cuda-toolkit", extra = ["nvcc", "nvrtc"], marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "cupy-cuda12x", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "fsspec", version = "2026.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "libcudf-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "numba", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "numba-cuda", extra = ["cu12"], marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvtx", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "packaging", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "pandas", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "pyarrow", version = "23.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and python_full_version < '3.14' and platform_machine == 'aarch64') or (python_full_version >= '3.10' and python_full_version < '3.14' and platform_machine == 'x86_64')" },
+    { name = "pylibcudf-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "rich", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "rmm-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/89/0d/a7bc8f4b9820cb8722fa7d6893dbf5e0811543c6fb144e1ee251528d0ab5/cudf_cu12-25.12.0-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fa29602069656fc405ea579427b2b2bc772e4433c9f1ceab15811b8393b314e7", size = 2644174, upload-time = "2025-12-11T11:26:42.83Z" },
@@ -559,8 +559,8 @@ name = "cupy-cuda12x"
 version = "13.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fastrlock", marker = "python_full_version >= '3.10'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "fastrlock", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/2e/db22c5148884e4e384f6ebbc7971fa3710f3ba67ca492798890a0fdebc45/cupy_cuda12x-13.6.0-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:9e37f60f27ff9625dfdccc4688a09852707ec613e32ea9404f425dd22a386d14", size = 126341714, upload-time = "2025-08-18T08:24:08.335Z" },
@@ -939,7 +939,7 @@ name = "importlib-metadata"
 version = "8.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp", marker = "python_full_version < '3.14'" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f3/49/3b30cad09e7771a4982d9975a8cbf64f00d4a1ececb53297f1d9a7be1b10/importlib_metadata-8.7.1.tar.gz", hash = "sha256:49fef1ae6440c182052f407c8d34a68f72efc36db9ca90dc0113398f2fdde8bb", size = 57107, upload-time = "2025-12-21T10:00:19.278Z" }
 wheels = [
@@ -1004,9 +1004,9 @@ name = "libcudf-cu12"
 version = "25.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "libkvikio-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "librmm-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "rapids-logger", marker = "python_full_version >= '3.10'" },
+    { name = "libkvikio-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "librmm-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "rapids-logger", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/20/d8/be6a2f55f9475e698bdd118d2c2c0a4a0eeaf1b675457b6bfc884954b130/libcudf_cu12-25.12.0-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:2ce038852a3695b777fb44595d89acbac4d0872cbf856be2ab1a185a87552478", size = 638217141, upload-time = "2025-12-11T15:20:34.747Z" },
@@ -1027,7 +1027,7 @@ name = "librmm-cu12"
 version = "25.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "rapids-logger", marker = "python_full_version >= '3.10'" },
+    { name = "rapids-logger", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/24/5b619349b4e2376eb89ee76be4d7e45cb785701dffbd938a27351ff13a03/librmm_cu12-25.12.0-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e109520f018932e4bc82ccb5c3169f0ff20aa38ce83c200bfc6efcbf2f6b4e44", size = 3847620, upload-time = "2025-12-11T16:04:39.752Z" },
@@ -1325,8 +1325,8 @@ name = "numba"
 version = "0.61.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "llvmlite", marker = "python_full_version >= '3.10'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "llvmlite", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/a0/e21f57604304aa03ebb8e098429222722ad99176a4f979d34af1d1ee80da/numba-0.61.2.tar.gz", hash = "sha256:8750ee147940a6637b80ecf7f95062185ad8726c8c28a2295b8ec1160a196f7d", size = 2820615, upload-time = "2025-04-09T02:58:07.659Z" }
 wheels = [
@@ -1357,7 +1357,7 @@ name = "numba-cuda"
 version = "0.19.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numba", marker = "python_full_version >= '3.10'" },
+    { name = "numba", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/df/84/4d021a10b101fa4f353bb58746cc555b7747cfe0057b4471854375c86ab6/numba_cuda-0.19.2.tar.gz", hash = "sha256:283e205a18769280d591b1a206b266d24f0f17c2c5ac35337a7bbd7e5a933ab8", size = 607432, upload-time = "2026-01-20T13:55:23.026Z" }
 wheels = [
@@ -1366,14 +1366,14 @@ wheels = [
 
 [package.optional-dependencies]
 cu12 = [
-    { name = "cuda-bindings", marker = "python_full_version >= '3.10'" },
-    { name = "cuda-core", marker = "python_full_version >= '3.10'" },
-    { name = "cuda-python", marker = "python_full_version >= '3.10'" },
-    { name = "nvidia-cuda-cccl-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "nvidia-cuda-nvcc-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "nvidia-nvjitlink-cu12", marker = "python_full_version >= '3.10'" },
+    { name = "cuda-bindings", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "cuda-core", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "cuda-python", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvidia-cuda-cccl-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvidia-cuda-nvcc-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 
 [[package]]
@@ -1629,7 +1629,7 @@ all = [
     { name = "pyarrow", version = "23.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 cudf = [
-    { name = "cudf-cu12", marker = "python_full_version >= '3.10'" },
+    { name = "cudf-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 daft = [
     { name = "daft", version = "0.6.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -1679,7 +1679,7 @@ sqlframe = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cudf-cu12", marker = "python_full_version >= '3.10' and extra == 'cudf'", specifier = ">=24.10.0" },
+    { name = "cudf-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14' and extra == 'cudf'", specifier = ">=24.10.0" },
     { name = "daft", marker = "extra == 'all'", specifier = ">=0.5.18" },
     { name = "daft", marker = "extra == 'daft'", specifier = ">=0.5.18" },
     { name = "dask", extras = ["dataframe"], marker = "extra == 'all'", specifier = ">=2024.8" },
@@ -2210,12 +2210,12 @@ name = "pylibcudf-cu12"
 version = "25.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-python", marker = "python_full_version >= '3.10'" },
-    { name = "libcudf-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "nvtx", marker = "python_full_version >= '3.10'" },
-    { name = "packaging", marker = "python_full_version >= '3.10'" },
-    { name = "rmm-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.10'" },
+    { name = "cuda-python", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "libcudf-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "nvtx", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "packaging", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "rmm-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/c2/fc1aa0219a15e13f123c7e79c7d89a4607579b5600eb5782a4210c323416/pylibcudf_cu12-25.12.0-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f9a38a398838b50035f4f9f5453b3926e73f3f58d8ee2d1d2da61a6487dbb3aa", size = 7324723, upload-time = "2025-12-11T16:26:00.429Z" },
@@ -2481,9 +2481,9 @@ name = "rmm-cu12"
 version = "25.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-python", marker = "python_full_version >= '3.10'" },
-    { name = "librmm-cu12", marker = "python_full_version >= '3.10'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "cuda-python", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "librmm-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' and python_full_version < '3.14'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/1a/1e36d8c37d793ebc47ef24e8ae8d82ba54f7e3afac6558811da47e8930e0/rmm_cu12-25.12.0-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c9fa1d3d4e667768517a682ea49b9502cd4e10a1c02813bd8446e51c84ac1f0f", size = 1219678, upload-time = "2025-12-11T19:40:43.676Z" },
