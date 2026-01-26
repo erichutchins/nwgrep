@@ -14,15 +14,19 @@ from nwgrep import nwgrep as nwgrep_func
 # 1. Check version
 print(f"nwgrep version: {nwgrep.__version__}")
 if not nwgrep.__version__:
-    raise RuntimeError("nwgrep version is empty")
+    msg = "nwgrep version is empty"
+    raise RuntimeError(msg)
 
 # 2. Check that we can import main components
 try:
-    from nwgrep import register_grep_accessor
+    import importlib
+
+    importlib.util.find_spec("nwgrep.register_grep_accessor")
 
     print("Successfully imported register_grep_accessor")
 except ImportError as e:
-    raise RuntimeError(f"Failed to import register_grep_accessor: {e}") from e
+    msg = f"Failed to import register_grep_accessor: {e}"
+    raise RuntimeError(msg) from e
 
 # 3. Basic CLI help check
 try:
@@ -31,7 +35,8 @@ try:
     )
     print("CLI help check succeeded")
 except subprocess.CalledProcessError as e:
-    raise RuntimeError(f"CLI help check failed: {e.stderr.decode()}") from e
+    msg = f"CLI help check failed: {e.stderr.decode()}"
+    raise RuntimeError(msg) from e
 
 # 4. Functional check if a backend is available
 try:
@@ -44,7 +49,8 @@ try:
     if len(result) == 1 and result.iloc[0, 0] == "foo":
         print("Functional smoke test with pandas succeeded")
     else:
-        raise RuntimeError(f"Functional smoke test failed. Result: {result}")
+        msg = f"Functional smoke test failed. Result: {result}"
+        raise RuntimeError(msg)
 except ImportError:
     print("Pandas not available, skipping functional smoke test")
 

@@ -22,8 +22,10 @@ class GrepLazyFrame(CompliantLazyFrame):
     def __narwhals_lazyframe__(self) -> Any:
         return self
 
-    def collect(self) -> GrepDataFrame:
-        return GrepDataFrame(self._df.collect(), version=self._version)
+    def collect(self, backend: Any | None = None, **kwargs: Any) -> GrepDataFrame:
+        return GrepDataFrame(
+            self._df.collect(backend=backend, **kwargs), version=self._version
+        )
 
 
 class GrepDataFrame(CompliantDataFrame):
@@ -34,8 +36,12 @@ class GrepDataFrame(CompliantDataFrame):
     def __narwhals_dataframe__(self) -> Any:
         return self
 
-    def lazy(self) -> GrepLazyFrame:
-        return GrepLazyFrame(self._df.lazy(), version=self._version)
+    def lazy(
+        self, backend: Any | None = None, session: Any | None = None
+    ) -> GrepLazyFrame:
+        return GrepLazyFrame(
+            self._df.lazy(backend=backend, session=session), version=self._version
+        )
 
 
 class GrepNamespace(CompliantNamespace[GrepLazyFrame, CompliantExpr]):

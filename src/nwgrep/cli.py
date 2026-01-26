@@ -68,7 +68,7 @@ Examples:
     return parser
 
 
-def _load_file(file_path: Path) -> FrameT:
+def _load_file(file_path: Path) -> nw.DataFrame | nw.LazyFrame:
     """Load a binary dataframe file based on its extension."""
     if not file_path.exists():
         print(f"Error: File '{file_path}' not found", file=sys.stderr)
@@ -131,7 +131,7 @@ def _output_results(result: FrameT, args: argparse.Namespace) -> None:
     """Handle printing or streaming the filtered results."""
     # Handle NDJSON streaming optimization for Polars
     if args.format == "ndjson":
-        native_result = nw.to_native(result)
+        native_result = nw.to_native(result, pass_through=True)
         if hasattr(native_result, "sink_ndjson") and not args.max_rows:
             # True streaming sink for Polars LazyFrame
             native_result.sink_ndjson(sys.stdout)

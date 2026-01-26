@@ -25,7 +25,7 @@ lf = pl.LazyFrame({"id": [1, 2, 3], "text": ["apple", "banana", "cherry"]})
 
 print("--- LazyFrame via .grep() accessor ---")
 # Accessor call on LazyFrame returns a native Polars LazyFrame
-result_lazy = lf.grep("a")
+result_lazy = lf.grep("a")  # ty:ignore[unresolved-attribute]
 print(f"Type: {type(result_lazy)}")
 
 # Collect results

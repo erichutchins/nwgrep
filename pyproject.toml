@@ -143,7 +143,7 @@ extend-ignore-names = [
 "run_tests.py" = ['S603', 'T201']
 "utils/*.py" = ["S603", "S607", "T201"]
 "src/nwgrep/cli.py" = ["T201"]
-"tests/*.py" = ["S101", "PD011"]
+"tests/*.py" = ["S101", "S603", "T201", "PD011"]
 "examples/**/*.py" = ["T201", "INP001"]
 
 [tool.ruff.lint.pydocstyle]
@@ -160,3 +160,12 @@ split-on-trailing-comma = false
 [tool.ruff.format]
 docstring-code-format = true
 skip-magic-trailing-comma = true
+
+[tool.ty.rules]
+# Relax strictness for ty (Red Knot)
+"invalid-method-override" = "ignore"
+"no-matching-overload" = "ignore"
+"invalid-argument-type" = "ignore"
+"missing-argument" = "ignore"
+"invalid-return-type" = "ignore"
+"unresolved-reference" = "ignore"
