@@ -1,0 +1,27 @@
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        language: system
+        entry: uv run ruff check --fix
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff format
+        language: system
+        entry: uv run ruff format
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ty
+        name: ty
+        language: system
+        entry: uvx ty check
+        files: '\.py$'
+        require_serial: true
+        pass_filenames: true
