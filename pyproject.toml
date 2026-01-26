@@ -66,11 +66,11 @@ Documentation = "https://github.com/erichutchins/nwgrep#readme"
 Repository = "https://github.com/erichutchins/nwgrep"
 Issues = "https://github.com/erichutchins/nwgrep/issues"
 
-[project.scripts]
-nwgrep = "nwgrep.cli:main"
-
 [project.entry-points."narwhals.plugins"]
 narwhals-nwgrep = "nwgrep"
+
+[project.scripts]
+nwgrep = "nwgrep.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -163,7 +163,7 @@ docstring-code-format = true
 skip-magic-trailing-comma = true
 
 [tool.ty.rules]
-# Pragmatic type checking with ty (Red Knot)
+# Pragmatic type checking with ty
 # Optional dependencies may not be installed, so we ignore unresolved imports
 "unresolved-import" = "ignore"
 # Type inference for optional dependencies is incomplete
