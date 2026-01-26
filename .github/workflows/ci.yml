@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra pandas
+          uv sync --python ${{ matrix.python-version }} --extra pandas
 
       - name: Run tests
         run: |
@@ -60,7 +60,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --python 3.12
 
       - name: Run ruff format check
         run: uv run ruff format --check .
@@ -101,13 +101,13 @@ jobs:
         run: |
           case "${{ matrix.backend }}" in
             pandas)
-              uv sync --extra pandas
+              uv sync --python 3.12 --extra pandas
               ;;
             polars)
-              uv sync --extra polars --extra pyarrow --extra pandas
+              uv sync --python 3.12 --extra polars --extra pyarrow --extra pandas
               ;;
             pyarrow)
-              uv sync --extra pyarrow --extra pandas
+              uv sync --python 3.12 --extra pyarrow --extra pandas
               ;;
           esac
 
