@@ -1,83 +1,97 @@
 from __future__ import annotations
 
-import pandas as pd
+from typing import TYPE_CHECKING, Any
+
+import narwhals as nw
 
 from nwgrep import nwgrep
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def test_basic_search() -> None:
-    df = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
-    )
+
+def to_pandas(res: Any) -> Any:
+    """Helper to convert result to pandas for assertion."""
+    return nw.from_native(res).to_pandas()
+
+
+def test_basic_search(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    df = constructor(data)
 
     result = nwgrep(df, "active")
-    assert len(result) == 2
-    assert "Alice" in result["name"].to_numpy()
-    assert "Eve" in result["name"].to_numpy()
+
+    # Assertions using pandas
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert "Alice" in res_pd["name"].to_numpy()
+    assert "Eve" in res_pd["name"].to_numpy()
 
 
-def test_case_insensitive() -> None:
-    df = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Eve"], "status": ["ACTIVE", "locked", "Active"]}
-    )
+def test_case_insensitive(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"name": ["Alice", "Bob", "Eve"], "status": ["ACTIVE", "locked", "Active"]}
+    df = constructor(data)
 
     result = nwgrep(df, "active", case_sensitive=False)
-    assert len(result) == 2
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
 
 
-def test_invert_match() -> None:
-    df = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
-    )
+def test_invert_match(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    df = constructor(data)
 
     result = nwgrep(df, "active", invert=True)
-    assert len(result) == 1
-    assert "Bob" in result["name"].to_numpy()
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 1
+    assert "Bob" in res_pd["name"].to_numpy()
 
 
-def test_multiple_patterns() -> None:
-    df = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
-    )
+def test_multiple_patterns(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    df = constructor(data)
 
     result = nwgrep(df, ["Alice", "Bob"])
-    assert len(result) == 2
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
 
 
-def test_specific_columns() -> None:
-    df = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
-    )
+def test_specific_columns(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    df = constructor(data)
 
     result = nwgrep(df, "active", columns=["status"])
-    assert len(result) == 2
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
 
 
-def test_regex_search() -> None:
-    df = pd.DataFrame(
-        {
-            "name": ["Alice", "Bob", "Eve"],
-            "email": ["alice@test.com", "bob@example.com", "eve@test.com"],
-        }
-    )
+def test_regex_search(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {
+        "name": ["Alice", "Bob", "Eve"],
+        "email": ["alice@test.com", "bob@example.com", "eve@test.com"],
+    }
+    df = constructor(data)
 
     result = nwgrep(df, r".*@test\.com", regex=True)
-    assert len(result) == 2
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
 
 
-def test_whole_word() -> None:
-    df = pd.DataFrame({"text": ["activate", "active", "actor"]})
+def test_whole_word(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"text": ["activate", "active", "actor"]}
+    df = constructor(data)
 
     result = nwgrep(df, "active", whole_word=True)
-    assert len(result) == 1
-    assert result["text"].to_numpy()[0] == "active"
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 1
+    assert res_pd["text"].to_numpy()[0] == "active"
 
 
-def test_null_handling() -> None:
-    df = pd.DataFrame(
-        {"name": ["Alice", None, "Eve"], "status": ["active", "locked", None]}
-    )
+def test_null_handling(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    data = {"name": ["Alice", None, "Eve"], "status": ["active", "locked", None]}
+    df = constructor(data)
 
     result = nwgrep(df, "active")
-    assert len(result) == 1
-    assert result["name"].to_numpy()[0] == "Alice"
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 1
+    assert res_pd["name"].to_numpy()[0] == "Alice"
