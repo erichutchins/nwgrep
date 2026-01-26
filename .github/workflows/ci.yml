@@ -32,11 +32,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync
+          uv sync --extra pandas
 
       - name: Run tests
         run: |
-          uv run pytest -v
+          uv run pytest -v --backend=pandas
 
   lint:
     name: Lint and Type Check
@@ -76,9 +76,9 @@ jobs:
           - backend: pandas
             extras: "pandas"
           - backend: polars
-            extras: "polars"
+            extras: "polars,pyarrow"
           - backend: pyarrow
-            extras: "pyarrow"
+            extras: "pyarrow,pandas"
 
     steps:
       - uses: actions/checkout@v6
@@ -93,7 +93,17 @@ jobs:
 
       - name: Install with ${{ matrix.backend }}
         run: |
-          uv sync --extra ${{ matrix.extras }}
+          case "${{ matrix.backend }}" in
+            pandas)
+              uv sync --extra pandas
+              ;;
+            polars)
+              uv sync --extra polars --extra pyarrow
+              ;;
+            pyarrow)
+              uv sync --extra pyarrow --extra pandas
+              ;;
+          esac
 
       - name: Run tests for ${{ matrix.backend }}
         run: |
