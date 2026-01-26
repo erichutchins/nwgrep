@@ -1431,12 +1431,6 @@ dask = [
     { name = "dask", version = "2024.8.0", source = { registry = "https://pypi.org/simple" }, extra = ["dataframe"], marker = "python_full_version < '3.10'" },
     { name = "dask", version = "2026.1.1", source = { registry = "https://pypi.org/simple" }, extra = ["dataframe"], marker = "python_full_version >= '3.10'" },
 ]
-dev = [
-    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
 duckdb = [
     { name = "duckdb" },
 ]
@@ -1468,6 +1462,14 @@ sqlframe = [
     { name = "sqlframe" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "cudf-cu12", marker = "python_full_version >= '3.10' and python_full_version < '3.14' and sys_platform == 'linux' and extra == 'cudf'", specifier = ">=24.10.0" },
@@ -1489,13 +1491,17 @@ requires-dist = [
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=13.0.0" },
     { name = "pyarrow-hotfix", marker = "extra == 'ibis'" },
     { name = "pyspark", marker = "python_full_version < '3.14' and extra == 'pyspark'", specifier = ">=3.5.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "rich", marker = "extra == 'ibis'" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "sqlframe", marker = "extra == 'sqlframe'", specifier = ">=3.22.0,!=3.39.3" },
 ]
-provides-extras = ["pandas", "polars", "pyarrow", "daft", "dask", "modin", "cudf", "pyspark", "duckdb", "ibis", "sqlframe", "all", "dev"]
+provides-extras = ["pandas", "polars", "pyarrow", "daft", "dask", "modin", "cudf", "pyspark", "duckdb", "ibis", "sqlframe", "all"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=7.0.0" },
+    { name = "pytest-cov", specifier = ">=4.0.0" },
+    { name = "ruff", specifier = ">=0.1.0" },
+]
 
 [[package]]
 name = "packaging"

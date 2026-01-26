@@ -48,6 +48,9 @@ all = [
     "dask[dataframe]>=2024.8",
     "duckdb>=1.1",
 ]
+
+
+[dependency-groups]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
