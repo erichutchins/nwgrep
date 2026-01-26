@@ -42,7 +42,7 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest -v --backend=pandas
+          uv run --python ${{ matrix.python-version }} pytest -v --backend=pandas
 
   lint:
     name: Lint and Type Check
@@ -113,4 +113,4 @@ jobs:
 
       - name: Run tests for ${{ matrix.backend }}
         run: |
-          uv run pytest -v -k "test_" --backend=${{ matrix.backend }}
+          uv run --python 3.12 pytest -v -k "test_" --backend=${{ matrix.backend }}
