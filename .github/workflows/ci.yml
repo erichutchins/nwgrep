@@ -15,10 +15,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-    
+
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -26,44 +26,44 @@ jobs:
           cache-dependency-glob: |
             pyproject.toml
             uv.lock
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
-      
+
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
-      
+          uv sync --dev
+
       - name: Run tests
         run: |
-          uv run pytest 
+          uv run pytest -v
 
   lint:
     name: Lint and Type Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.12
-      
+
       - name: Install dependencies
-        run: uv sync --all-extras --dev
-      
+        run: uv sync --dev
+
       - name: Run ruff format check
         run: uv run ruff format --check .
-      
+
       - name: Run ruff lint
         run: uv run ruff check .
-      
-      - name: Run mypy
-        run: uv run mypy nwgrep
+
+      - name: Run ty
+        run: uvx ty check src/nwgrep
 
   test-backends:
     name: Test with ${{ matrix.backend }}
@@ -79,22 +79,22 @@ jobs:
             extras: "polars"
           - backend: pyarrow
             extras: "pyarrow"
-    
+
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      
+
       - name: Set up Python
         run: uv python install 3.12
-      
+
       - name: Install with ${{ matrix.backend }}
         run: |
           uv sync --extra ${{ matrix.extras }}
-      
+
       - name: Run tests for ${{ matrix.backend }}
         run: |
           uv run pytest -v -k "test_" --backend=${{ matrix.backend }}

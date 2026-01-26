@@ -8,7 +8,6 @@ Grep-like tool for dataframes that works with pandas, polars, and any other back
 [![Claude](https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=fff)](https://claude.ai)
 [![Gemini](https://img.shields.io/badge/Gemini-8E75FF?logo=googlegemini&logoColor=fff)](https://antigravity.google)
 
-
 ## Installation
 
 ```bash
@@ -16,6 +15,7 @@ uv add nwgrep
 ```
 
 With specific backends:
+
 ```bash
 uv add nwgrep[pandas]  # pandas support
 uv add nwgrep[polars]  # polars support
@@ -25,6 +25,7 @@ uv add nwgrep[all]     # all major backends
 ```
 
 Or using `pip`:
+
 ```bash
 pip install nwgrep
 ```
@@ -174,12 +175,12 @@ uv run nwgrep --format csv "pattern" data.parquet > results.csv
 
 ## Which Method Should I Use?
 
-| Method | When to Use |
-|--------|-------------|
-| **`nwgrep(df, ...)`** | Simple scripts, maximum compatibility |
-| **`df.pipe(nwgrep, ...)`** | Data pipelines, functional style |
-| **`df.grep(...)`** | Interactive use (notebooks), cleanest syntax |
-| **Narwhals native** | When working within a Narwhals data-agnostic pipeline |
+| Method                     | When to Use                                           |
+| -------------------------- | ----------------------------------------------------- |
+| **`nwgrep(df, ...)`**      | Simple scripts, maximum compatibility                 |
+| **`df.pipe(nwgrep, ...)`** | Data pipelines, functional style                      |
+| **`df.grep(...)`**         | Interactive use (notebooks), cleanest syntax          |
+| **Narwhals native**        | When working within a Narwhals data-agnostic pipeline |
 
 ## Features
 
@@ -188,7 +189,7 @@ uv run nwgrep --format csv "pattern" data.parquet > results.csv
 - 📊 **Column filtering**: Search all columns or specific ones
 - ⚡ **Lazy evaluation**: Efficient with large datasets when using polars/daft
 - 🎯 **Familiar interface**: grep-like flags and behavior
-- 🔧 **Type safe**: Full type hints and mypy support
+- 🔧 **Type safe**: Full type hints with ty (Red Knot) type checking
 - 🎨 **Flexible API**: Function, pipe, or method - your choice!
 
 ## API Reference
@@ -196,6 +197,7 @@ uv run nwgrep --format csv "pattern" data.parquet > results.csv
 ### `nwgrep(df, pattern, **kwargs)`
 
 **Parameters:**
+
 - `df`: DataFrame or LazyFrame (Native or Narwhals)
 - `pattern`: str or list of str - Search pattern(s)
 - `columns`: list of str, optional - Specific columns to search

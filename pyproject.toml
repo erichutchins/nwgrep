@@ -35,7 +35,7 @@ pyarrow = ["pyarrow>=13.0.0"]
 daft = ["daft>=0.5.18"]
 dask = ["dask[dataframe]>=2024.8"]
 modin = ["modin"]
-cudf = ["cudf-cu12>=24.10.0; python_version >= '3.10' and python_version < '3.14'"]
+cudf = ["cudf-cu12>=24.10.0; python_version >= '3.10' and python_version < '3.14' and sys_platform == 'linux'"]
 pyspark = ["pyspark>=3.5.0; python_version < '3.14'"]
 duckdb = ["duckdb>=1.1"]
 ibis = ["ibis-framework>=6.0.0", "rich", "packaging", "pyarrow_hotfix"]
@@ -52,7 +52,6 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "ruff>=0.1.0",
-    "mypy>=1.0.0",
 ]
 
 [build-system]
@@ -131,10 +130,10 @@ builtins-ignorelist = ["format"]
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = [
-  "Series", 
-  "DataFrame", 
-  "_Window", 
-  "F", 
+  "Series",
+  "DataFrame",
+  "_Window",
+  "F",
   "_F",
 ]
 
@@ -162,10 +161,12 @@ docstring-code-format = true
 skip-magic-trailing-comma = true
 
 [tool.ty.rules]
-# Relax strictness for ty (Red Knot)
-"invalid-method-override" = "ignore"
-"no-matching-overload" = "ignore"
+# Pragmatic type checking with ty (Red Knot)
+# Optional dependencies may not be installed, so we ignore unresolved imports
+"unresolved-import" = "ignore"
+# Type inference for optional dependencies is incomplete
 "invalid-argument-type" = "ignore"
 "missing-argument" = "ignore"
-"invalid-return-type" = "ignore"
-"unresolved-reference" = "ignore"
+# Examples and tests use optional backends - ignore attribute errors
+"unresolved-attribute" = "ignore"
+"possibly-missing-attribute" = "ignore"
