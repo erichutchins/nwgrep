@@ -38,6 +38,9 @@ htmlcov/
 *.swp
 *.swo
 
+# Documentation
+site/
+
 # OS
 .DS_Store
 Thumbs.db
