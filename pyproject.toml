@@ -66,6 +66,10 @@ lint = [
     "ruff>=0.9.0",
     "pre-commit>=3.0.0",
 ]
+# Documentation
+docs = [
+    "mkdocs-material>=9.7.0",
+]
 # Development: tests + lint + core backends
 dev = [
     {include-group = "tests"},
@@ -78,8 +82,8 @@ requires = ["uv_build>=0.9.27,<0.10.0"]
 build-backend = "uv_build"
 
 [project.urls]
-Homepage = "https://github.com/erichutchins/nwgrep"
-Documentation = "https://github.com/erichutchins/nwgrep#readme"
+Homepage = "https://erichutchins.github.io/nwgrep/"
+Documentation = "https://erichutchins.github.io/nwgrep/"
 Repository = "https://github.com/erichutchins/nwgrep"
 Issues = "https://github.com/erichutchins/nwgrep/issues"
 

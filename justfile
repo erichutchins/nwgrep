@@ -63,3 +63,19 @@ ci: check test
 coverage:
     uv run pytest --backend=pandas --backend=polars --backend=pyarrow --cov=nwgrep --cov-report=html
     @echo "Coverage report generated in htmlcov/"
+
+# Serve documentation locally
+docs-serve:
+    uv run --group docs mkdocs serve
+
+# Build documentation
+docs-build:
+    uv run --group docs mkdocs build
+
+# Deploy documentation to GitHub Pages
+docs-deploy:
+    uv run --group docs mkdocs gh-deploy --force
+
+# Clean documentation build artifacts
+docs-clean:
+    rm -rf site/

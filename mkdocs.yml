@@ -1,0 +1,89 @@
+site_name: nwgrep
+site_description: Grep-like tool for dataframes using Narwhals - works with pandas, polars, and more
+site_url: https://erichutchins.github.io/nwgrep/
+repo_url: https://github.com/erichutchins/nwgrep
+repo_name: erichutchins/nwgrep
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+  palette:
+    # Light mode
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - API Reference: api.md
+  - CLI Reference: cli.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  # Code highlighting
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+  # Admonitions (callouts/alerts)
+  - admonition
+  - pymdownx.details
+
+  # Tables and formatting
+  - tables
+  - attr_list
+  - md_in_html
+
+  # Better lists
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+  # Icons and emojis
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator:
+        !!python/name:material.extensions.emoji.to_svg # Enhanced markdown
+
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/erichutchins/nwgrep
+  version:
+    provider: mike
