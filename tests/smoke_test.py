@@ -21,11 +21,13 @@ if not nwgrep.__version__:
 try:
     import importlib
 
-    importlib.util.find_spec("nwgrep.register_grep_accessor")
-
-    print("Successfully imported register_grep_accessor")
+    spec = importlib.util.find_spec("nwgrep.accessor")
+    if spec is None:
+        msg = "Failed to find nwgrep.accessor module"
+        raise RuntimeError(msg)
+    print("Successfully found nwgrep.accessor module")
 except ImportError as e:
-    msg = f"Failed to import register_grep_accessor: {e}"
+    msg = f"Failed to import nwgrep.accessor: {e}"
     raise RuntimeError(msg) from e
 
 # 3. Basic CLI help check

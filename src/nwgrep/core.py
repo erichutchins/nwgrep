@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import narwhals as nw
 
@@ -115,16 +115,10 @@ def nwgrep(
     0  Alice  active
     1    Bob  locked
     """
-    # Detect if we already have a Narwhals object
-    if isinstance(df, (nw.DataFrame, nw.LazyFrame)):
-        is_narwhals = True
-        result_is_lazy = isinstance(df, nw.LazyFrame)
-        df_nw = df.lazy()
-    else:
-        is_narwhals = False
-        nw_temp = nw.from_native(df)
-        result_is_lazy = isinstance(nw_temp, nw.LazyFrame)
-        df_nw = nw_temp.lazy()
+    # Convert to Narwhals (pass through if already Narwhals)
+    nw_frame = nw.from_native(df, pass_through=True)
+    result_is_lazy = isinstance(nw_frame, nw.LazyFrame)
+    df_nw = nw_frame.lazy()
 
     # Convert single pattern to list
     patterns = [pattern] if isinstance(pattern, str) else list(pattern)
@@ -135,12 +129,9 @@ def nwgrep(
     if not search_cols:
         # No searchable columns, return empty or full based on invert
         result = df_nw.filter(nw.lit(invert))
-        if is_narwhals:
-            final_result: Any = result if result_is_lazy else result.collect()
-            from typing import cast
-
-            return cast("FrameT", final_result)
-        return nw.to_native(result if result_is_lazy else result.collect())
+        return nw.to_native(
+            result if result_is_lazy else result.collect(), pass_through=True
+        )
 
     # Adjust pattern for whole word matching
     if whole_word:
@@ -168,15 +159,7 @@ def nwgrep(
 
         result = df_nw.filter(final_match)
 
-    # Return as Narwhals if input was Narwhals
-    if is_narwhals:
-        final_result_nw: Any = result if result_is_lazy else result.collect()
-        from typing import cast
-
-        return cast("FrameT", final_result_nw)
-
-    # Otherwise return as native
-    return nw.to_native(result if result_is_lazy else result.collect())
-
-
-grep = nwgrep
+    # Return in the same format as input (Narwhals or native)
+    return nw.to_native(
+        result if result_is_lazy else result.collect(), pass_through=True
+    )

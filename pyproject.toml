@@ -23,7 +23,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "narwhals>=1.0.0",
+    "narwhals>=2.15.0",
 ]
 
 [project.optional-dependencies]
@@ -39,6 +39,8 @@ pyspark = ["pyspark>=3.5.0; python_version < '3.14'"]
 duckdb = ["duckdb>=1.1"]
 ibis = ["ibis-framework>=6.0.0", "rich", "packaging", "pyarrow_hotfix"]
 sqlframe = ["sqlframe>=3.22.0,!=3.39.3"]
+# CLI requires polars for efficient lazy scanning of binary formats
+cli = ["polars>=1.37.1"]
 all = [
     "pandas>=1.1.3",
     "polars>=0.20.4",
@@ -50,14 +52,29 @@ all = [
 
 
 [dependency-groups]
-dev = [
+# Core test backends (pandas, polars, pyarrow)
+core = [
+    "nwgrep[pandas,polars,pyarrow]",
+]
+# Test dependencies
+tests = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "ruff>=0.1.0",
+]
+# Linting and formatting
+lint = [
+    "ruff>=0.9.0",
+    "pre-commit>=3.0.0",
+]
+# Development: tests + lint + core backends
+dev = [
+    {include-group = "tests"},
+    {include-group = "lint"},
+    {include-group = "core"},
 ]
 
 [build-system]
-requires = ["uv_build>=0.9.26,<0.10.0"]
+requires = ["uv_build>=0.9.27,<0.10.0"]
 build-backend = "uv_build"
 
 [project.urls]
@@ -65,9 +82,6 @@ Homepage = "https://github.com/erichutchins/nwgrep"
 Documentation = "https://github.com/erichutchins/nwgrep#readme"
 Repository = "https://github.com/erichutchins/nwgrep"
 Issues = "https://github.com/erichutchins/nwgrep/issues"
-
-[project.entry-points."narwhals.plugins"]
-narwhals-nwgrep = "nwgrep"
 
 [project.scripts]
 nwgrep = "nwgrep.cli:main"
