@@ -19,15 +19,15 @@ theme:
   palette:
     # Light mode
     - scheme: default
-      primary: deep purple
-      accent: purple
+      primary: blue grey
+      accent: blue grey
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     # Dark mode
     - scheme: slate
-      primary: deep purple
-      accent: purple
+      primary: blue grey
+      accent: blue grey
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -40,6 +40,7 @@ nav:
   - Usage: usage.md
   - API Reference: api.md
   - CLI Reference: cli.md
+  - Vibecoding: vibecoding.md
   - Contributing: contributing.md
 
 markdown_extensions:
@@ -71,6 +72,7 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator:
         !!python/name:material.extensions.emoji.to_svg # Enhanced markdown
+
 
   - pymdownx.keys
   - pymdownx.mark

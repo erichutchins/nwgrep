@@ -19,19 +19,19 @@ test-backend BACKEND *ARGS:
 
 # Run linter
 lint:
-    uv run ruff check src/ tests/
+    uv run ruff check src/ tests/ examples/
 
 # Run linter and fix issues
 lint-fix:
-    uv run ruff check --fix src/ tests/
+    uv run ruff check --fix src/ tests/ examples/
 
 # Run formatter check
 format-check:
-    uv run ruff format --check src/ tests/
+    uv run ruff format --check src/ tests/ examples/
 
 # Run formatter
 format:
-    uv run ruff format src/ tests/
+    uv run ruff format src/ tests/ examples/
 
 # Run type checker
 typecheck:
@@ -54,7 +54,7 @@ clean:
 
 # Run pre-commit hooks on all files
 pre-commit:
-    uv run pre-commit run --all-files
+    prek run --all-files
 
 # Full CI check: lint, format, typecheck, and tests
 ci: check test
