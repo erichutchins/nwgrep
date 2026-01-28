@@ -8,7 +8,8 @@ Thank you for your interest in contributing to nwgrep! This document provides gu
 
 - Python 3.10+
 - [uv](https://docs.astral.sh/uv/) - Fast Python package manager
-- [just](https://github.com/casey/just) - Command runner (optional but recommended)
+- [just](https://github.com/casey/just) - Command runner
+- [prek](https://prek.j178.dev/installation/) - Pre-commit hooks runner
 
 ### Installation
 

@@ -19,8 +19,11 @@ class GrepAccessor:
         columns: Sequence[str] | None = None,
         case_sensitive: bool = True,
         regex: bool = False,
+        fixed_strings: bool = False,
         invert: bool = False,
         whole_word: bool = False,
+        count: bool = False,
+        exact: bool = False,
     ) -> Any:
         """Search for pattern in any column and return matching rows.
 
@@ -41,14 +44,31 @@ class GrepAccessor:
         """
         from nwgrep.core import nwgrep
 
+        # Validate flag combinations
+        if fixed_strings and whole_word:
+            msg = (
+                "-F/--fixed-strings and -w/--whole-word are incompatible. "
+                "Whole-word matching requires regex boundaries."
+            )
+            raise ValueError(msg)
+
+        # Determine final regex mode based on priority: fixed_strings > whole_word > regex
+        final_regex = regex
+        if fixed_strings:
+            final_regex = False  # Force literal
+        elif whole_word:
+            final_regex = True  # Whole-word requires regex
+
         return nwgrep(
             self._df,
             pattern,
             columns=columns,
             case_sensitive=case_sensitive,
-            regex=regex,
+            regex=final_regex,
             invert=invert,
             whole_word=whole_word,
+            count=count,
+            exact=exact,
         )
 
 

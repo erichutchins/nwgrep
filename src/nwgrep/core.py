@@ -24,8 +24,56 @@ def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list
     ]
 
 
+def _build_column_match(
+    expr: nw.Expr, pat: str, *, case_sensitive: bool, regex: bool, exact: bool
+) -> nw.Expr:
+    """Build a match expression for a single column and pattern."""
+    if exact:
+        return _build_exact_match(expr, pat, case_sensitive=case_sensitive, regex=regex)
+    if regex:
+        return _build_regex_match(expr, pat, case_sensitive=case_sensitive)
+    return _build_literal_match(expr, pat, case_sensitive=case_sensitive)
+
+
+def _build_exact_match(
+    expr: nw.Expr, pat: str, *, case_sensitive: bool, regex: bool
+) -> nw.Expr:
+    """Build exact match expression (equality or anchored regex)."""
+    if regex:
+        # Wrap pattern with anchors for exact regex matching
+        anchored_pattern = f"^{pat}$"
+        if case_sensitive:
+            return expr.str.contains(anchored_pattern, literal=False)
+        return expr.str.to_lowercase().str.contains(
+            anchored_pattern.lower(), literal=False
+        )
+    # Use equality for exact fixed string matching
+    if case_sensitive:
+        return expr == pat
+    return expr.str.to_lowercase() == pat.lower()
+
+
+def _build_regex_match(expr: nw.Expr, pat: str, *, case_sensitive: bool) -> nw.Expr:
+    """Build regex match expression."""
+    if case_sensitive:
+        return expr.str.contains(pat, literal=False)
+    return expr.str.to_lowercase().str.contains(pat.lower(), literal=False)
+
+
+def _build_literal_match(expr: nw.Expr, pat: str, *, case_sensitive: bool) -> nw.Expr:
+    """Build literal string match expression."""
+    if case_sensitive:
+        return expr.str.contains(pat, literal=True)
+    return expr.str.to_lowercase().str.contains(pat.lower(), literal=True)
+
+
 def _build_match_expr(
-    search_cols: list[str], patterns: list[str], *, case_sensitive: bool, regex: bool
+    search_cols: list[str],
+    patterns: list[str],
+    *,
+    case_sensitive: bool,
+    regex: bool,
+    exact: bool,
 ) -> list[nw.Expr]:
     """Build matching expressions for each pattern."""
     match_exprs = []
@@ -35,18 +83,9 @@ def _build_match_expr(
             expr = nw.col(col)
             null_check = expr.is_null()
 
-            if regex:
-                if case_sensitive:
-                    match = expr.str.contains(pat, literal=False)
-                else:
-                    match = expr.str.to_lowercase().str.contains(
-                        pat.lower(), literal=False
-                    )
-            elif case_sensitive:
-                match = expr.str.contains(pat, literal=True)
-            else:
-                match = expr.str.to_lowercase().str.contains(pat.lower(), literal=True)
-
+            match = _build_column_match(
+                expr, pat, case_sensitive=case_sensitive, regex=regex, exact=exact
+            )
             col_matches.append(match & ~null_check)
 
         if col_matches:
@@ -63,7 +102,9 @@ def nwgrep(
     regex: bool = False,
     invert: bool = False,
     whole_word: bool = False,
-) -> FrameT:
+    count: bool = False,
+    exact: bool = False,
+) -> FrameT | int:
     """Grep-like filtering for dataframes across any backend.
 
     Parameters
@@ -82,11 +123,16 @@ def nwgrep(
         Return rows that DON'T match (like grep -v)
     whole_word : bool, default False
         Match whole words only (implies regex=True)
+    count : bool, default False
+        Return count of matching rows instead of rows themselves
+    exact : bool, default False
+        Exact match - use equality for fixed strings, anchored regex otherwise
 
     Returns:
     -------
-    DataFrame or LazyFrame
-        Filtered dataframe with matching rows (same type as input)
+    DataFrame, LazyFrame, or int
+        If count=True: Integer count of matching rows
+        Otherwise: Filtered dataframe with matching rows (same type as input)
 
     Examples:
     --------
@@ -140,7 +186,7 @@ def nwgrep(
 
     # Build matching expressions for each pattern
     match_exprs = _build_match_expr(
-        search_cols, patterns, case_sensitive=case_sensitive, regex=regex
+        search_cols, patterns, case_sensitive=case_sensitive, regex=regex, exact=exact
     )
 
     if not match_exprs:
@@ -158,6 +204,10 @@ def nwgrep(
             final_match = ~final_match
 
         result = df_nw.filter(final_match)
+
+    # If count requested, return integer count
+    if count:
+        return result.collect().shape[0]
 
     # Return in the same format as input (Narwhals or native)
     return nw.to_native(

@@ -56,7 +56,19 @@ Examples:
         "-E", "--regex", action="store_true", help="Treat pattern as regex"
     )
     parser.add_argument(
+        "-F",
+        "--fixed-strings",
+        action="store_true",
+        help="Force literal string matching (disable regex)",
+    )
+    parser.add_argument(
         "-w", "--whole-word", action="store_true", help="Match whole words only"
+    )
+    parser.add_argument(
+        "-x",
+        "--exact",
+        action="store_true",
+        help="Exact match (equality or anchored regex)",
     )
     parser.add_argument(
         "-n",
@@ -64,6 +76,11 @@ Examples:
         type=int,
         default=None,
         help="Maximum number of rows to display",
+    )
+    parser.add_argument(
+        "--count",
+        action="store_true",
+        help="Print count of matching rows instead of rows themselves",
     )
     parser.add_argument(
         "--format",
@@ -110,10 +127,43 @@ def _load_file(file_path: Path) -> pl.LazyFrame:
         sys.exit(1)
 
 
+def _validate_flags(args: argparse.Namespace) -> bool:
+    """Validate flag combinations and determine final regex mode.
+
+    Returns the final regex mode after resolving flag conflicts.
+    """
+    # Check for incompatible flag combinations
+    if args.fixed_strings and args.whole_word:
+        print(
+            "Error: -F/--fixed-strings and -w/--whole-word are incompatible",
+            file=sys.stderr,
+        )
+        print("Whole-word matching requires regex boundaries (\\b)", file=sys.stderr)
+        sys.exit(1)
+
+    # Warn if both -F and -E are specified
+    if args.fixed_strings and args.regex:
+        print("Warning: -F/--fixed-strings overrides -E/--regex flag", file=sys.stderr)
+
+    # Determine final regex mode based on priority: -F > -w > -E > default
+    if args.fixed_strings:
+        return False  # Force literal
+    if args.whole_word:
+        return True  # Whole-word requires regex
+    return args.regex  # Use -E flag
+
+
 def _output_results(
-    result: pl.LazyFrame | pl.DataFrame, args: argparse.Namespace
+    result: pl.LazyFrame | pl.DataFrame | int, args: argparse.Namespace
 ) -> None:
     """Handle printing or streaming the filtered results."""
+    # Handle count output (just print the integer)
+    if isinstance(result, int):
+        if args.format != "table":
+            print("Warning: --format ignored when using --count", file=sys.stderr)
+        print(result)
+        return
+
     # Handle NDJSON streaming for LazyFrame
     if (
         args.format == "ndjson"
@@ -150,21 +200,26 @@ def main() -> None:
     parser = _create_parser()
     args = parser.parse_args()
 
+    # Validate flags and get final regex mode
+    final_regex = _validate_flags(args)
+
     file_path = Path(args.file)
     df = _load_file(file_path)
 
     columns = args.columns.split(",") if args.columns else None
 
     try:
-        # Use nwgrep with polars LazyFrame, get back polars
+        # Use nwgrep with polars LazyFrame, get back polars (or int if count)
         result = nwgrep(
             df,
             args.pattern,
             columns=columns,
             case_sensitive=not args.ignore_case,
-            regex=args.regex,
+            regex=final_regex,
             invert=args.invert,
             whole_word=args.whole_word,
+            count=args.count,
+            exact=args.exact,
         )
         _output_results(result, args)
     except (ValueError, RuntimeError, OSError) as e:
