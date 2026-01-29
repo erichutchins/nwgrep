@@ -70,6 +70,44 @@ nwgrep --columns name,email "alice" users.parquet
 nwgrep --columns status "active" users.feather
 ```
 
+### Count Matches
+
+```bash
+# Print count of matching rows instead of the rows themselves
+nwgrep --count "error" logs.parquet
+
+# Useful for quick statistics
+nwgrep --count -i "warning" data.feather
+```
+
+### List Files with Matches
+
+```bash
+# Print filename if matches found (like grep -l)
+nwgrep -l "error" data.parquet
+
+# With multiple files
+nwgrep -l "pattern" *.parquet
+
+# Useful for filtering which files to process
+for file in $(nwgrep -l "error" *.parquet); do
+    echo "Processing $file with errors"
+done
+```
+
+### Show Only Matching Values
+
+```bash
+# Print only the values that matched (like grep -o)
+nwgrep -o "error" logs.parquet
+
+# Extract email addresses
+nwgrep -o -E "\w+@\w+\.\w+" users.parquet
+
+# Output format is still configurable
+nwgrep -o --format csv "pattern" data.parquet
+```
+
 ### Limit Output
 
 ```bash
@@ -92,7 +130,7 @@ nwgrep --max-count 10 "pattern" data.feather
     ```bash
     # Newline-delimited JSON (streams lazily!)
     nwgrep --format ndjson "pattern" data.parquet
-    
+
     # Perfect for piping to other tools
     nwgrep --format ndjson "error" logs.parquet | jq '.timestamp'
     ```
@@ -135,27 +173,30 @@ nwgrep "pattern" data.jsonl
 
 ### Search Options
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--ignore-case` | `-i` | Case-insensitive search |
-| `--invert-match` | `-v` | Select non-matching rows |
-| `--regex` | `-E` | Treat pattern as regex |
-| `--columns COLS` | | Search only in specified columns (comma-separated) |
-| `--max-count N` | `-n` | Stop after N matches |
+| Option           | Short | Description                                        |
+| ---------------- | ----- | -------------------------------------------------- |
+| `--ignore-case`  | `-i`  | Case-insensitive search                            |
+| `--invert-match` | `-v`  | Select non-matching rows                           |
+| `--regex`        | `-E`  | Treat pattern as regex                             |
+| `--columns COLS` |       | Search only in specified columns (comma-separated) |
+| `--max-count N`  | `-n`  | Stop after N matches                               |
 
 ### Output Options
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--format FORMAT` | `-f` | Output format: `table`, `csv`, `tsv`, `ndjson` |
-| `--no-header` | | Omit column headers in output |
+| Option                 | Short | Description                                        |
+| ---------------------- | ----- | -------------------------------------------------- |
+| `--count`              |       | Print count of matching rows instead of rows       |
+| `--files-with-matches` | `-l`  | Print only filenames with matches (like `grep -l`) |
+| `--only-matching`      | `-o`  | Print only the matching values (like `grep -o`)    |
+| `--format FORMAT`      | `-f`  | Output format: `table`, `csv`, `tsv`, `ndjson`     |
+| `--no-header`          |       | Omit column headers in output                      |
 
 ### Other Options
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--version` | | Show version and exit |
-| `--help` | `-h` | Show help message |
+| Option      | Short | Description           |
+| ----------- | ----- | --------------------- |
+| `--version` |       | Show version and exit |
+| `--help`    | `-h`  | Show help message     |
 
 ## Advanced Usage
 
@@ -254,16 +295,19 @@ The CLI uses polars lazy evaluation automatically:
 
 ## Comparison with grep
 
-| Feature | grep | nwgrep |
-|---------|------|--------|
-| Plain text files | ✅ | ❌ |
-| Binary dataframe formats | ❌ | ✅ |
-| Column-aware | ❌ | ✅ |
-| Structured output | ❌ | ✅ |
-| `-i` (ignore case) | ✅ | ✅ |
-| `-v` (invert) | ✅ | ✅ |
-| `-E` (regex) | ✅ | ✅ |
-| Line numbers | ✅ | N/A |
+| Feature                   | grep | nwgrep |
+| ------------------------- | ---- | ------ |
+| Plain text files          | ✅   | ❌     |
+| Binary dataframe formats  | ❌   | ✅     |
+| Column-aware              | ❌   | ✅     |
+| Structured output         | ❌   | ✅     |
+| `-i` (ignore case)        | ✅   | ✅     |
+| `-v` (invert)             | ✅   | ✅     |
+| `-E` (regex)              | ✅   | ✅     |
+| `-c` (count)              | ✅   | ✅     |
+| `-l` (files with matches) | ✅   | ✅     |
+| `-o` (only matching)      | ✅   | ✅     |
+| Line numbers              | ✅   | N/A    |
 
 nwgrep complements grep - use grep for text files, nwgrep for dataframe files.
 

@@ -83,6 +83,12 @@ Examples:
         help="Print count of matching rows instead of rows themselves",
     )
     parser.add_argument(
+        "-l",
+        "--files-with-matches",
+        action="store_true",
+        help="Print only filenames with matches (like grep -l)",
+    )
+    parser.add_argument(
         "--format",
         choices=["table", "csv", "tsv", "ndjson"],
         default="table",
@@ -153,8 +159,41 @@ def _validate_flags(args: argparse.Namespace) -> bool:
     return args.regex  # Use -E flag
 
 
+def _output_dataframe(df: pl.DataFrame, args: argparse.Namespace) -> None:
+    """Output a dataframe in the requested format."""
+    if args.format == "csv":
+        print(df.write_csv())
+    elif args.format == "tsv":
+        print(df.write_csv(separator="\t"))
+    elif args.format == "ndjson":
+        buf = io.BytesIO()
+        df.write_ndjson(buf)
+        print(buf.getvalue().decode("utf-8").strip())
+    else:  # table
+        print(df)
+
+
+def _output_files_with_matches(
+    result: pl.LazyFrame | pl.DataFrame, args: argparse.Namespace, file_path: Path
+) -> None:
+    """Handle files-with-matches output (-l flag)."""
+    if args.format != "table":
+        print(
+            "Warning: --format ignored when using -l/--files-with-matches",
+            file=sys.stderr,
+        )
+    # Check if there are any matches (short-circuit on first match)
+    has_matches = (
+        result.limit(1).collect().height > 0
+        if isinstance(result, pl.LazyFrame)
+        else len(result) > 0
+    )
+    if has_matches:
+        print(file_path)
+
+
 def _output_results(
-    result: pl.LazyFrame | pl.DataFrame | int, args: argparse.Namespace
+    result: pl.LazyFrame | pl.DataFrame | int, args: argparse.Namespace, file_path: Path
 ) -> None:
     """Handle printing or streaming the filtered results."""
     # Handle count output (just print the integer)
@@ -162,6 +201,11 @@ def _output_results(
         if args.format != "table":
             print("Warning: --format ignored when using --count", file=sys.stderr)
         print(result)
+        return
+
+    # Handle files-with-matches output
+    if args.files_with_matches:
+        _output_files_with_matches(result, args, file_path)
         return
 
     # Handle NDJSON streaming for LazyFrame
@@ -180,17 +224,7 @@ def _output_results(
     if args.max_rows:
         df = df.head(args.max_rows)
 
-    # Output in requested format
-    if args.format == "csv":
-        print(df.write_csv())
-    elif args.format == "tsv":
-        print(df.write_csv(separator="\t"))
-    elif args.format == "ndjson":
-        buf = io.BytesIO()
-        df.write_ndjson(buf)
-        print(buf.getvalue().decode("utf-8").strip())
-    else:  # table
-        print(df)
+    _output_dataframe(df, args)
 
 
 def main() -> None:
@@ -221,7 +255,7 @@ def main() -> None:
             count=args.count,
             exact=args.exact,
         )
-        _output_results(result, args)
+        _output_results(result, args, file_path)
     except (ValueError, RuntimeError, OSError) as e:
         print(f"Error during search: {e}", file=sys.stderr)
         sys.exit(1)

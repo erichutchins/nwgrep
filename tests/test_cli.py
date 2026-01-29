@@ -255,3 +255,64 @@ def test_cli_exact_with_count(tmp_path: Path) -> None:
 
     assert result.returncode == 0
     assert result.stdout.strip() == "2"
+
+
+def test_cli_files_with_matches(tmp_path: Path) -> None:
+    """Test -l flag prints filename when there are matches."""
+    df = pd.DataFrame({"col": ["foo", "bar", "baz"]})
+    test_file = tmp_path / "test.parquet"
+    df.to_parquet(test_file)
+
+    result = subprocess.run(
+        [sys.executable, "-m", "nwgrep.cli", "-l", "foo", str(test_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == str(test_file)
+    assert (
+        "foo" not in result.stdout or str(test_file) in result.stdout
+    )  # Only filename
+
+
+def test_cli_files_with_matches_no_match(tmp_path: Path) -> None:
+    """Test -l flag prints nothing when there are no matches."""
+    df = pd.DataFrame({"col": ["foo", "bar", "baz"]})
+    test_file = tmp_path / "test.parquet"
+    df.to_parquet(test_file)
+
+    result = subprocess.run(
+        [sys.executable, "-m", "nwgrep.cli", "-l", "xyz", str(test_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == ""
+
+
+def test_cli_files_with_matches_long_flag(tmp_path: Path) -> None:
+    """Test --files-with-matches long flag."""
+    df = pd.DataFrame({"col": ["foo", "bar"]})
+    test_file = tmp_path / "test.parquet"
+    df.to_parquet(test_file)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "nwgrep.cli",
+            "--files-with-matches",
+            "foo",
+            str(test_file),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == str(test_file)

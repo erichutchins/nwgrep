@@ -129,6 +129,15 @@ nwgrep -i -E "warn(ing)?" data.feather
 # Column-specific search
 nwgrep --columns email "@gmail.com" users.parquet
 
+# Count matching rows
+nwgrep --count "pattern" data.parquet
+
+# List files with matches (like grep -l)
+nwgrep -l "error" *.parquet
+
+# Show only matching values (like grep -o)
+nwgrep -o "error" data.parquet
+
 # Stream as NDJSON (lazy evaluation)
 nwgrep --format ndjson "pattern" huge_file.parquet
 ```
