@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Literal, cast, overload
+from typing import TYPE_CHECKING, Literal, overload
 
 import narwhals as nw
 
@@ -299,8 +299,10 @@ def nwgrep(
         if highlight:
             msg = "highlight and count parameters are incompatible"
             raise ValueError(msg)
+        # .item() returns the scalar value. We know nw.len() returns an integer.
+        # Cast to int to satisfy the type checker and handle backend-specific int types.
         count_value = result.select(nw.len()).collect().item()
-        return cast("int", count_value)
+        return int(count_value)  # type: ignore[arg-type]
 
     # Handle highlighting
     if highlight:
