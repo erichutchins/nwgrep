@@ -31,7 +31,7 @@ df.grep(r"^\d{3}-\d{4}$")      # Regex support
 ## Quick Start
 
 ```bash
-uv add nwgrep[polars]  # or pandas, dask, pyarrow, cudf
+uv add nwgrep
 ```
 
 ```python
@@ -174,14 +174,13 @@ pip install nwgrep
 With specific backends:
 
 ```bash
-uv add nwgrep[pandas]    # pandas support
-uv add nwgrep[polars]    # polars support
-uv add nwgrep[dask]      # dask support
-uv add nwgrep[cudf]      # cuDF (GPU) support
-uv add nwgrep[all]       # all major backends
-uv add nwgrep[cli]       # CLI for parquet/feather files
-uv add nwgrep[notebook]  # highlighting in notebooks (pandas/polars)
+uv add nwgrep             # core library
+uv add nwgrep[cli]        # CLI for searching parquet/feather filesn using polars
+uv add nwgrep[notebook]   # highlighting in notebooks (pandas/polars)
+uv add nwgrep[all]        # include all features (cli + notebook)
 ```
+
+Note: `nwgrep` is designed to be added to an existing environment with a dataframe library (pandas, polars, etc.) already installed. It does not install these backends by default, except for `polars` when installing the `[cli]` extra.
 
 ## Features
 

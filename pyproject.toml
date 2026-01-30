@@ -27,37 +27,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Aligned with narwhals minimum supported versions
-pandas = ["pandas>=1.1.3"]
-polars = ["polars>=0.20.4"]
-pyarrow = ["pyarrow>=13.0.0"]
-daft = ["daft>=0.5.18"]
-dask = ["dask[dataframe]>=2024.8"]
-modin = ["modin"]
-cudf = ["cudf-cu12>=24.10.0; python_version >= '3.10' and python_version < '3.14' and sys_platform == 'linux'"]
-pyspark = ["pyspark>=3.5.0; python_version < '3.14'"]
-duckdb = ["duckdb>=1.1"]
-ibis = ["ibis-framework>=6.0.0", "rich", "packaging", "pyarrow_hotfix"]
-sqlframe = ["sqlframe>=3.22.0,!=3.39.3"]
+# Feature-based extras
 # CLI requires polars for efficient lazy scanning of binary formats
 cli = ["polars>=1.37.1"]
-# Styling for highlighted output in notebooks (pandas.Styler, great_tables for polars)
+# Styling for highlighted output in notebooks (great_tables for polars)
 notebook = ["great-tables>=0.15.0"]
-all = [
-    "pandas>=1.1.3",
-    "polars>=0.20.4",
-    "pyarrow>=13.0.0",
-    "daft>=0.5.18",
-    "dask[dataframe]>=2024.8",
-    "duckdb>=1.1",
-    "great-tables>=0.15.0",
-]
-
+# Include all feature-based extras
+all = ["nwgrep[cli,notebook]"]
 
 [dependency-groups]
-# Core test backends (pandas, polars, pyarrow)
-core = [
-    "nwgrep[pandas,polars,pyarrow]",
+# Backends used for testing and development
+test-backends = [
+    "pandas>=1.1.3",
+    "polars>=1.37.1",
+    "pyarrow>=13.0.0",
+    "jinja2",
 ]
 # Test dependencies
 tests = [
@@ -72,11 +56,11 @@ lint = [
 docs = [
     "mkdocs-material>=9.7.0",
 ]
-# Development: tests + lint + core backends
+# Development: tests + lint + test-backends
 dev = [
     {include-group = "tests"},
     {include-group = "lint"},
-    {include-group = "core"},
+    {include-group = "test-backends"},
 ]
 
 [build-system]
@@ -187,9 +171,3 @@ skip-magic-trailing-comma = true
 # Pragmatic type checking with ty
 # Optional dependencies may not be installed, so we ignore unresolved imports
 "unresolved-import" = "ignore"
-# Type inference for optional dependencies is incomplete
-"invalid-argument-type" = "ignore"
-"missing-argument" = "ignore"
-# Examples and tests use optional backends - ignore attribute errors
-"unresolved-attribute" = "ignore"
-"possibly-missing-attribute" = "ignore"

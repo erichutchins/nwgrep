@@ -274,7 +274,7 @@ result = nwgrep(df, "ERROR", highlight=True)
 **Styling Requirements:**
 
 - **Pandas**: Uses built-in `pandas.Styler` (no additional dependencies)
-- **Polars**: Requires `great-tables` library (install with `pip install 'nwgrep[notebook]'`)
+- **Polars**: Requires `great-tables` library (install with `uv add 'nwgrep[notebook]'`)
 
 **Highlighting Features:**
 
