@@ -33,21 +33,29 @@ def _build_column_match(
 
     Consolidates exact, regex, and literal matching with unified case-handling.
     """
-    # Normalize once at the start
+    # For regex mode, use regex flags for case-insensitivity instead of lowercasing
+    # (lowercasing the pattern breaks character classes like [A-Z])
+    if regex:
+        if exact:
+            # Wrap pattern with anchors for exact regex matching
+            anchored_pattern = f"^(?:{pat})$"
+            # Use (?i) flag for case-insensitive matching
+            final_pattern = (
+                anchored_pattern if case_sensitive else f"(?i){anchored_pattern}"
+            )
+            return expr.str.contains(final_pattern, literal=False)
+        # Regular regex matching
+        # Use (?i) flag for case-insensitive matching
+        final_pattern = pat if case_sensitive else f"(?i){pat}"
+        return expr.str.contains(final_pattern, literal=False)
+
+    # For non-regex (literal/exact fixed strings), normalize to lowercase
     search_expr = expr if case_sensitive else expr.str.to_lowercase()
     search_pat = pat if case_sensitive else pat.lower()
 
-    # Simple three-way branch
-    if exact and not regex:
+    if exact:
         # Use equality for exact fixed string matching
         return search_expr == search_pat
-    if exact and regex:
-        # Wrap pattern with anchors for exact regex matching
-        anchored_pattern = f"^(?:{search_pat})$"
-        return search_expr.str.contains(anchored_pattern, literal=False)
-    if regex:
-        # Regex pattern matching
-        return search_expr.str.contains(search_pat, literal=False)
     # Literal string matching (default)
     return search_expr.str.contains(search_pat, literal=True)
 
@@ -61,23 +69,23 @@ def _build_match_expr(
     exact: bool,
 ) -> nw.Expr:
     """Build matching expression: any(pattern) matches any(column)."""
+    # Flatten matching logic into a single list of candidate expressions.
+    # Since we want to know if ANY pattern matches ANY column, a flat list
+    # of all combinations combined with OR is mathematically equivalent
+    # to the nested OR logic.
+    exprs = [
+        _build_column_match(
+            nw.col(col), pat, case_sensitive=case_sensitive, regex=regex, exact=exact
+        )
+        for pat in patterns
+        for col in search_cols
+    ]
 
-    def match_any_column(pattern: str) -> nw.Expr:
-        """Check if pattern matches any column."""
-        column_matches = [
-            _build_column_match(
-                nw.col(col),
-                pattern,
-                case_sensitive=case_sensitive,
-                regex=regex,
-                exact=exact,
-            )
-            for col in search_cols
-        ]
-        return nw.any_horizontal(*column_matches, ignore_nulls=True)
+    # Fast-path: If there's only one pattern and one column, avoid any_horizontal overhead.
+    if len(exprs) == 1:
+        return exprs[0]
 
-    pattern_exprs = [match_any_column(pat) for pat in patterns]
-    return nw.any_horizontal(*pattern_exprs, ignore_nulls=True)
+    return nw.any_horizontal(*exprs, ignore_nulls=True)
 
 
 def _apply_highlighting_to_result(

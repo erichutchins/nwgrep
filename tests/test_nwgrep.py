@@ -279,3 +279,65 @@ def test_exact_match_with_existing_anchors(
     # ^(?:^foo$)$ is equivalent to ^foo$
     result = nwgrep(df, "^foo$", exact=True, regex=True)
     assert len(to_pandas(result)) == 1
+
+
+def test_regex_case_insensitive_with_character_classes(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test that case-insensitive regex preserves character classes."""
+    data = {"col": ["ABC123", "abc456", "XYZ", "xyz", "123"]}
+    df = constructor(data)
+
+    # [A-Z]+ should match uppercase letters in case-sensitive mode
+    result = nwgrep(df, r"[A-Z]+", regex=True, case_sensitive=True)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"ABC123", "XYZ"}
+
+    # [A-Z]+ with case_sensitive=False should match both upper and lower
+    result = nwgrep(df, r"[A-Z]+", regex=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 4
+    assert set(res_pd["col"]) == {"ABC123", "abc456", "XYZ", "xyz"}
+
+
+def test_regex_case_insensitive_with_word_boundaries(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test case-insensitive regex with word boundaries."""
+    data = {"col": ["FOO bar", "foo bar", "foobar", "BAR baz"]}
+    df = constructor(data)
+
+    # \bFOO\b should match "FOO" as a whole word (case-insensitive)
+    result = nwgrep(df, r"\bFOO\b", regex=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"FOO bar", "foo bar"}
+
+
+def test_exact_match_regex_case_insensitive_with_anchors(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with pre-existing anchors and case-insensitive mode."""
+    data = {"col": ["FOO", "foo", "foobar", "barfoo"]}
+    df = constructor(data)
+
+    # ^FOO$ with exact=True and case_sensitive=False should match "FOO" and "foo"
+    result = nwgrep(df, "^FOO$", exact=True, regex=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"FOO", "foo"}
+
+
+def test_regex_case_insensitive_with_inline_flags(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test that user-provided inline flags are preserved."""
+    data = {"col": ["Test", "TEST", "test", "other"]}
+    df = constructor(data)
+
+    # User provides (?i) flag explicitly - should work in case-sensitive mode
+    result = nwgrep(df, r"(?i)test", regex=True, case_sensitive=True)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 3
+    assert set(res_pd["col"]) == {"Test", "TEST", "test"}
