@@ -204,7 +204,22 @@ class TestHighlightEdgeCases:
 
         # Patch _detect_backend to return "unsupported"
         with (
-            patch("nwgrep.core._detect_backend", return_value="unsupported"),
+            patch("nwgrep.highlight._detect_backend", return_value="unsupported"),
             pytest.raises(ValueError, match="Highlighting not supported"),
         ):
             nwgrep(df, "foo", highlight=True)
+
+    def test_highlight_applied_for_whole_word(self) -> None:
+        """Test that highlighting is actually applied for whole_word matches."""
+        # This confirms that regex flag is correctly passed to highlighting
+        df = pd.DataFrame({"col": ["foo", "bar foo", "foobar"]})
+        result = nwgrep(df, "foo", whole_word=True, highlight=True)
+
+        # Filtered data should exist
+        assert len(result.data) == 2
+
+        # Highlighting should be present
+        # If regex=False was passed to highlighting, it would look for literal "\bfoo\b"
+        # and fail to match "foo", resulting in no background color.
+        html = result.to_html()
+        assert "background-color: #ffff99" in html
