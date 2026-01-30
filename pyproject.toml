@@ -36,12 +36,13 @@ notebook = ["great-tables>=0.15.0"]
 all = ["nwgrep[cli,notebook]"]
 
 [dependency-groups]
-# Backends used for testing and development
+# Backends used for testing and development, aligned to narwhals' 
+# minimum requirements github.com/narwhals-dev/narwhals/blob/main/pyproject.toml
 test-backends = [
     "pandas>=1.1.3",
-    "polars>=1.37.1",
+    "polars>=0.20.4", 
     "pyarrow>=13.0.0",
-    "jinja2",
+    "jinja2",  # Required for pandas.DataFrame.style
 ]
 # Test dependencies
 tests = [
@@ -56,11 +57,16 @@ lint = [
 docs = [
     "mkdocs-material>=9.7.0",
 ]
-# Development: tests + lint + test-backends
+# Notebook styling (mirrors optional-dependencies.notebook for dev group)
+notebook = [
+    "great-tables>=0.15.0",
+]
+# Development: tests + lint + test-backends + notebook
 dev = [
     {include-group = "tests"},
     {include-group = "lint"},
     {include-group = "test-backends"},
+    {include-group = "notebook"},
 ]
 
 [build-system]

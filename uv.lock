@@ -651,6 +651,7 @@ notebook = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "great-tables" },
     { name = "jinja2" },
     { name = "pandas" },
     { name = "polars" },
@@ -664,6 +665,9 @@ docs = [
 ]
 lint = [
     { name = "ruff" },
+]
+notebook = [
+    { name = "great-tables" },
 ]
 test-backends = [
     { name = "jinja2" },
@@ -687,9 +691,10 @@ provides-extras = ["cli", "notebook", "all"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "great-tables", specifier = ">=0.15.0" },
     { name = "jinja2" },
     { name = "pandas", specifier = ">=1.1.3" },
-    { name = "polars", specifier = ">=1.37.1" },
+    { name = "polars", specifier = ">=0.20.4" },
     { name = "pyarrow", specifier = ">=13.0.0" },
     { name = "pytest", specifier = ">=7.0.0" },
     { name = "pytest-cov", specifier = ">=4.0.0" },
@@ -697,10 +702,11 @@ dev = [
 ]
 docs = [{ name = "mkdocs-material", specifier = ">=9.7.0" }]
 lint = [{ name = "ruff", specifier = ">=0.9.0" }]
+notebook = [{ name = "great-tables", specifier = ">=0.15.0" }]
 test-backends = [
     { name = "jinja2" },
     { name = "pandas", specifier = ">=1.1.3" },
-    { name = "polars", specifier = ">=1.37.1" },
+    { name = "polars", specifier = ">=0.20.4" },
     { name = "pyarrow", specifier = ">=13.0.0" },
 ]
 tests = [
