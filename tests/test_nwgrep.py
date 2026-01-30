@@ -258,3 +258,24 @@ def test_exact_match_alternation(
 
     assert len(res_pd) == 2
     assert set(res_pd["col"]) == {"foo", "bar"}
+
+
+def test_exact_match_with_existing_anchors(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with patterns that already contain anchors."""
+    data = {"col": ["foo", "bar", "foobar"]}
+    df = constructor(data)
+
+    # Patterns with existing anchors should still work correctly
+    # ^(?:^foo)$ is equivalent to ^foo$
+    result = nwgrep(df, "^foo", exact=True, regex=True)
+    assert len(to_pandas(result)) == 1
+
+    # ^(?:foo$)$ is equivalent to ^foo$
+    result = nwgrep(df, "foo$", exact=True, regex=True)
+    assert len(to_pandas(result)) == 1
+
+    # ^(?:^foo$)$ is equivalent to ^foo$
+    result = nwgrep(df, "^foo$", exact=True, regex=True)
+    assert len(to_pandas(result)) == 1
