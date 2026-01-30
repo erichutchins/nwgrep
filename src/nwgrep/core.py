@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
     from narwhals.typing import FrameT
 
-    from nwgrep.highlight import HighlightConfig
-
 
 def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list[str]:
     """Determine which columns to search."""
@@ -92,10 +90,20 @@ def _build_match_expr(
 
 def _apply_highlighting_to_result(
     result: nw.LazyFrame,
-    result_is_lazy: bool,  # noqa: FBT001
-    config: HighlightConfig,
+    *,
+    result_is_lazy: bool,
+    patterns: list[str],
+    case_sensitive: bool,
+    regex: bool,
+    exact: bool,
+    search_cols: list[str],
 ) -> Any:
-    """Handle all highlighting logic."""
+    """Handle all highlighting logic.
+
+    Note: result_is_lazy is a keyword-only boolean parameter that tracks whether
+    the original input was lazy. This is an internal implementation detail for
+    determining collection behavior, not a user-facing configuration option.
+    """
     # Always collect if lazy (highlighting requires materialized data)
     if result_is_lazy:
         result_collected = result.collect()
@@ -107,8 +115,16 @@ def _apply_highlighting_to_result(
     # Convert to native
     native_df = nw.to_native(result_collected, pass_through=True)
 
-    # Apply highlighting based on backend
-    from nwgrep.highlight import apply_highlighting
+    # Construct highlighting config at this layer
+    from nwgrep.highlight import HighlightConfig, apply_highlighting
+
+    config = HighlightConfig(
+        patterns=patterns,
+        case_sensitive=case_sensitive,
+        regex=regex,
+        exact=exact,
+        search_cols=search_cols,
+    )
 
     return apply_highlighting(native_df, config)
 
@@ -260,16 +276,15 @@ def nwgrep(
 
     # Handle highlighting
     if highlight:
-        from nwgrep.highlight import HighlightConfig
-
-        config = HighlightConfig(
+        return _apply_highlighting_to_result(
+            result,
+            result_is_lazy=result_is_lazy,
             patterns=patterns,
             case_sensitive=case_sensitive,
             regex=regex,
             exact=exact,
             search_cols=search_cols,
         )
-        return _apply_highlighting_to_result(result, result_is_lazy, config)
 
     # Return in the same format as input (Narwhals or native)
     return nw.to_native(
