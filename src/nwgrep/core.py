@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import math
+import re
+from typing import TYPE_CHECKING, Any
 
 import narwhals as nw
 
@@ -93,6 +95,151 @@ def _build_match_expr(
     return match_exprs
 
 
+def _detect_backend(df_native: Any) -> str:
+    """Detect the dataframe backend (pandas, polars, or other)."""
+    module = type(df_native).__module__
+    if module.startswith("pandas"):
+        return "pandas"
+    if module.startswith("polars"):
+        return "polars"
+    return "unsupported"
+
+
+def _get_matching_cells(
+    df_native: Any,
+    patterns: list[str],
+    case_sensitive: bool,  # noqa: FBT001
+    regex: bool,  # noqa: FBT001
+) -> dict[str, list[bool]]:
+    """Build a mask of cells containing matches.
+
+    Returns a dict mapping column names to lists of booleans indicating matches.
+    """
+    mask: dict[str, list[bool]] = {}
+
+    # Get column names and data
+    if isinstance(df_native.columns, list):  # polars
+        col_names = df_native.columns
+        col_data = {col: df_native[col].to_list() for col in col_names}
+    else:  # pandas
+        col_names = df_native.columns.tolist()
+        col_data = {col: df_native[col].astype(str).tolist() for col in col_names}
+
+    # For each column, check if cells match any pattern
+    for col in col_names:
+        col_mask = [
+            _cell_matches_pattern(cell, patterns, case_sensitive, regex)
+            for cell in col_data[col]
+        ]
+        mask[col] = col_mask
+
+    return mask
+
+
+def _cell_matches_pattern(
+    cell_val: Any,
+    patterns: list[str],
+    case_sensitive: bool,  # noqa: FBT001
+    regex: bool,  # noqa: FBT001
+) -> bool:
+    """Check if a cell value matches any of the patterns."""
+    # Skip null/None values
+    if cell_val is None or (isinstance(cell_val, float) and math.isnan(cell_val)):
+        return False
+
+    cell_str = str(cell_val)
+
+    for pat in patterns:
+        if regex:
+            flags = 0 if case_sensitive else re.IGNORECASE
+            if re.search(pat, cell_str, flags):
+                return True
+        elif case_sensitive:
+            if pat in cell_str:
+                return True
+        elif pat.lower() in cell_str.lower():
+            return True
+
+    return False
+
+
+def _highlight_pandas_dataframe(
+    df: Any,
+    patterns: list[str],
+    case_sensitive: bool,  # noqa: FBT001
+    regex: bool,  # noqa: FBT001
+) -> Any:
+    """Highlight matching cells in a pandas DataFrame with yellow background."""
+    # Get mask of matching cells
+    mask = _get_matching_cells(df, patterns, case_sensitive, regex)
+
+    # Build a boolean dataframe for styling
+    import pandas as pd
+
+    style_mask = pd.DataFrame(False, index=df.index, columns=df.columns)
+    for col, col_mask in mask.items():
+        style_mask[col] = col_mask
+
+    return df.style.apply(
+        lambda row: [
+            "background-color: #ffff99" if style_mask.loc[row.name, col] else ""
+            for col in df.columns
+        ],
+        axis=1,
+    )
+
+
+def _highlight_polars_dataframe(
+    df: Any,
+    patterns: list[str],
+    case_sensitive: bool,  # noqa: FBT001
+    regex: bool,  # noqa: FBT001
+) -> Any:
+    """Highlight matching cells in a polars DataFrame using Great Tables."""
+    try:
+        from great_tables import GT, loc, style
+    except ImportError as e:
+        msg = (
+            "Great Tables is required for polars highlighting. "
+            "Install it with: pip install 'nwgrep[notebook]'"
+        )
+        raise ImportError(msg) from e
+
+    # Get mask of matching cells
+    mask = _get_matching_cells(df, patterns, case_sensitive, regex)
+
+    # Build a boolean expression for matching cells
+    gt = GT(df)
+
+    # Apply highlighting to each matching cell
+    for col, col_mask in mask.items():
+        # Create a polars expression that evaluates to True for matching rows
+        matching_rows = [i for i, matched in enumerate(col_mask) if matched]
+        if matching_rows:
+            gt = gt.tab_style(
+                style=style.fill(color="#ffff99"),
+                locations=loc.body(columns=col, rows=matching_rows),
+            )
+
+    return gt
+
+
+def _apply_highlighting(
+    df_native: Any,
+    patterns: list[str],
+    case_sensitive: bool,  # noqa: FBT001
+    regex: bool,  # noqa: FBT001
+) -> Any:
+    """Apply cell-level highlighting based on the dataframe backend."""
+    backend = _detect_backend(df_native)
+    if backend == "pandas":
+        return _highlight_pandas_dataframe(df_native, patterns, case_sensitive, regex)
+    if backend == "polars":
+        return _highlight_polars_dataframe(df_native, patterns, case_sensitive, regex)
+    msg = f"Highlighting not supported for backend: {backend}"
+    raise ValueError(msg)
+
+
 def nwgrep(
     df: FrameT,
     pattern: str | Sequence[str],
@@ -104,7 +251,8 @@ def nwgrep(
     whole_word: bool = False,
     count: bool = False,
     exact: bool = False,
-) -> FrameT | int:
+    highlight: bool = False,
+) -> FrameT | int | Any:
     """Grep-like filtering for dataframes across any backend.
 
     Parameters
@@ -127,6 +275,8 @@ def nwgrep(
         Return count of matching rows instead of rows themselves
     exact : bool, default False
         Exact match - use equality for fixed strings, anchored regex otherwise
+    highlight : bool, default False
+        Highlight matching rows with yellow background (pandas/polars only, for notebooks)
 
     Returns:
     -------
@@ -207,7 +357,26 @@ def nwgrep(
 
     # If count requested, return integer count
     if count:
+        if highlight:
+            msg = "highlight and count parameters are incompatible"
+            raise ValueError(msg)
         return result.collect().shape[0]
+
+    # Handle highlighting
+    if highlight:
+        # Always collect if lazy (highlighting requires materialized data)
+        if result_is_lazy:
+            result_collected = result.collect()
+        else:
+            result_collected = (
+                result.collect() if isinstance(result, nw.LazyFrame) else result
+            )
+
+        # Convert to native
+        native_df = nw.to_native(result_collected, pass_through=True)
+
+        # Apply highlighting based on backend
+        return _apply_highlighting(native_df, patterns, case_sensitive, regex)
 
     # Return in the same format as input (Narwhals or native)
     return nw.to_native(

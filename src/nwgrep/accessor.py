@@ -24,6 +24,7 @@ class GrepAccessor:
         whole_word: bool = False,
         count: bool = False,
         exact: bool = False,
+        highlight: bool = False,
     ) -> Any:
         """Search for pattern in any column and return matching rows.
 
@@ -69,6 +70,7 @@ class GrepAccessor:
             whole_word=whole_word,
             count=count,
             exact=exact,
+            highlight=highlight,
         )
 
 

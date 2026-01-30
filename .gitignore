@@ -38,6 +38,9 @@ htmlcov/
 *.swp
 *.swo
 
+# Notebook Checkpoints
+.ipynb_checkpoints/
+
 # Documentation
 site/
 

@@ -158,7 +158,7 @@ result = df.grep("pattern", columns=["email"])
 **Best for:** Interactive use (notebooks), frequent searching, cleanest syntax.
 
 !!! note
-    The accessor method works with both pandas and polars DataFrames.
+The accessor method works with both pandas and polars DataFrames.
 
 ### Method 4: Narwhals Native
 
@@ -196,7 +196,7 @@ nwgrep works seamlessly across all backends:
     ```python
     import pandas as pd
     from nwgrep import nwgrep
-    
+
     df = pd.DataFrame({"col": ["foo", "bar", "baz"]})
     result = nwgrep(df, "ba")
     # Returns pandas DataFrame
@@ -207,7 +207,7 @@ nwgrep works seamlessly across all backends:
     ```python
     import polars as pl
     from nwgrep import nwgrep
-    
+
     df = pl.DataFrame({"col": ["foo", "bar", "baz"]})
     result = nwgrep(df, "ba")
     # Returns polars DataFrame
@@ -218,12 +218,12 @@ nwgrep works seamlessly across all backends:
     ```python
     import polars as pl
     from nwgrep import nwgrep
-    
+
     # LazyFrame - no computation until .collect()
     df = pl.scan_parquet("data.parquet")
     result = nwgrep(df, "ba")
     # Returns polars LazyFrame
-    
+
     # Collect when ready
     final = result.collect()
     ```
@@ -233,11 +233,11 @@ nwgrep works seamlessly across all backends:
     ```python
     import daft
     from nwgrep import nwgrep
-    
+
     df = daft.read_parquet("data.parquet")
     result = nwgrep(df, "ba")
     # Returns daft DataFrame (lazy)
-    
+
     result.show()  # Trigger computation
     ```
 
@@ -246,11 +246,43 @@ nwgrep works seamlessly across all backends:
     ```python
     import pyarrow as pa
     from nwgrep import nwgrep
-    
+
     df = pa.table({"col": ["foo", "bar", "baz"]})
     result = nwgrep(df, "ba")
     # Returns pyarrow Table
     ```
+
+## Highlighting Results
+
+For pandas and polars backends, you can highlight the specific cells containing matches in notebooks (Jupyter, Marimo):
+
+```python
+from nwgrep import nwgrep
+import polars as pl
+
+df = pl.DataFrame({
+    "timestamp": ["2024-01-01", "2024-01-02", "2024-01-03"],
+    "level": ["INFO", "ERROR", "WARN"],
+    "message": ["Started", "Connection failed", "Slow query"]
+})
+
+# Highlight cells containing "ERROR" with yellow background
+result = nwgrep(df, "ERROR", highlight=True)
+# In Jupyter/Marimo, only cells containing the match are highlighted
+```
+
+**Styling Requirements:**
+
+- **Pandas**: Uses built-in `pandas.Styler` (no additional dependencies)
+- **Polars**: Requires `great-tables` library (install with `pip install 'nwgrep[notebook]'`)
+
+**Highlighting Features:**
+
+- Only cells containing the matched text are highlighted with yellow background
+- Returns a styled object that displays beautifully in notebooks
+- Works across all columns, highlighting only the specific cells with matches
+- Incompatible with `count=True` (raises `ValueError`)
+- Works with all search options (regex, case-insensitive, column filtering, etc.)
 
 ## Advanced Examples
 

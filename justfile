@@ -79,3 +79,12 @@ docs-deploy:
 # Clean documentation build artifacts
 docs-clean:
     rm -rf site/
+
+# Execute example notebooks and save output in-place
+examples:
+    @echo "Executing example notebooks..."
+    uv run --with jupyter jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 examples/pandas/highlighting.ipynb
+    uv run --with jupyter jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 examples/polars/highlighting.ipynb
+    @echo "✓ Notebooks executed with outputs saved"
+    @echo "  - examples/pandas/highlighting.ipynb"
+    @echo "  - examples/polars/highlighting.ipynb"

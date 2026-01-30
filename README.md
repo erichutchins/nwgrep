@@ -110,6 +110,9 @@ df.grep("active", whole_word=True)
 
 # Column-specific search
 df.grep("pattern", columns=["name", "email"])
+
+# Highlight matching cells in notebooks (pandas/polars)
+df.grep("error", highlight=True)  # Returns styled output with highlighted cells
 ```
 
 ## Command Line Interface
@@ -171,12 +174,13 @@ pip install nwgrep
 With specific backends:
 
 ```bash
-uv add nwgrep[pandas]  # pandas support
-uv add nwgrep[polars]  # polars support
-uv add nwgrep[dask]    # dask support
-uv add nwgrep[cudf]    # cuDF (GPU) support
-uv add nwgrep[all]     # all major backends
-uv add nwgrep[cli]     # CLI for parquet/feather files
+uv add nwgrep[pandas]    # pandas support
+uv add nwgrep[polars]    # polars support
+uv add nwgrep[dask]      # dask support
+uv add nwgrep[cudf]      # cuDF (GPU) support
+uv add nwgrep[all]       # all major backends
+uv add nwgrep[cli]       # CLI for parquet/feather files
+uv add nwgrep[notebook]  # highlighting in notebooks (pandas/polars)
 ```
 
 ## Features
