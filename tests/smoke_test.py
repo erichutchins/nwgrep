@@ -19,7 +19,7 @@ if not nwgrep.__version__:
 
 # 2. Check that we can import main components
 try:
-    import importlib
+    import importlib.util
 
     spec = importlib.util.find_spec("nwgrep.accessor")
     if spec is None:
@@ -45,7 +45,7 @@ try:
     import pandas as pd
 
     df = pd.DataFrame({"a": ["foo", "bar"], "b": ["baz", "qux"]})
-    result = nwgrep_func(df, "foo")
+    result = nwgrep_func(df, "foo")  # type: ignore[invalid-argument-type]
 
     # In pandas, result should be a DataFrame
     if len(result) == 1 and result.iloc[0, 0] == "foo":

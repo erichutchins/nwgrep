@@ -60,7 +60,7 @@ class GrepAccessor:
         elif whole_word:
             final_regex = True  # Whole-word requires regex
 
-        return nwgrep(
+        return nwgrep(  # type: ignore[no-matching-overload]
             self._df,
             pattern,
             columns=columns,

@@ -63,7 +63,7 @@ class TestHighlightPandas:
         df = pd.DataFrame({"col": ["foo", "bar"]})
 
         with pytest.raises(ValueError, match="incompatible"):
-            nwgrep(df, "foo", count=True, highlight=True)
+            nwgrep(df, "foo", count=True, highlight=True)  # type: ignore[no-matching-overload]
 
     def test_highlight_with_accessor(self) -> None:
         """Test highlighting via the accessor method."""
@@ -133,7 +133,7 @@ class TestHighlightPolars:
         df = pl.DataFrame({"col": ["foo", "bar"]})
 
         with pytest.raises(ValueError, match="incompatible"):
-            nwgrep(df, "foo", count=True, highlight=True)
+            nwgrep(df, "foo", count=True, highlight=True)  # type: ignore[no-matching-overload]
 
     @pytest.mark.skipif(not _has_great_tables(), reason="Great Tables not installed")
     def test_highlight_with_accessor_polars(self) -> None:

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Literal, cast, overload
 
 import narwhals as nw
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from great_tables import GT
     from narwhals.typing import FrameT
+    from pandas.io.formats.style import Styler
 
 
 def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list[str]:
@@ -97,7 +99,7 @@ def _apply_highlighting_to_result(
     regex: bool,
     exact: bool,
     search_cols: list[str],
-) -> Any:
+) -> Styler | GT:
     """Handle all highlighting logic.
 
     Note: result_is_lazy is a keyword-only boolean parameter that tracks whether
@@ -141,7 +143,7 @@ def nwgrep(
     whole_word: bool = False,
     count: Literal[True],
     exact: bool = False,
-    highlight: bool = False,
+    highlight: Literal[False] = False,
 ) -> int: ...
 
 
@@ -157,7 +159,23 @@ def nwgrep(
     whole_word: bool = False,
     count: Literal[False] = False,
     exact: bool = False,
-    highlight: bool = False,
+    highlight: Literal[True],
+) -> Styler | GT: ...
+
+
+@overload
+def nwgrep(
+    df: FrameT,
+    pattern: str | Sequence[str],
+    *,
+    columns: Sequence[str] | None = None,
+    case_sensitive: bool = True,
+    regex: bool = False,
+    invert: bool = False,
+    whole_word: bool = False,
+    count: Literal[False] = False,
+    exact: bool = False,
+    highlight: Literal[False] = False,
 ) -> FrameT: ...
 
 
@@ -173,7 +191,7 @@ def nwgrep(
     count: bool = False,
     exact: bool = False,
     highlight: bool = False,
-) -> FrameT | int:
+) -> FrameT | int | Styler | GT:
     """Grep-like filtering for dataframes across any backend.
 
     Parameters
@@ -234,8 +252,17 @@ def nwgrep(
     """
     # Convert to Narwhals (pass through if already Narwhals)
     nw_frame = nw.from_native(df, pass_through=True)
-    result_is_lazy = isinstance(nw_frame, nw.LazyFrame)
-    df_nw = nw_frame.lazy()
+    if isinstance(nw_frame, nw.LazyFrame):
+        result_is_lazy = True
+        df_nw = nw_frame
+    elif isinstance(nw_frame, nw.DataFrame):
+        result_is_lazy = False
+        df_nw = nw_frame.lazy()
+    else:
+        # This branch should ideally not be reached if FrameT is correctly defined
+        # as DataFrame | LazyFrame, but it's good for robustness.
+        msg = f"Expected DataFrame or LazyFrame, got {type(nw_frame)}"
+        raise TypeError(msg)
 
     # Convert single pattern to list
     patterns = [pattern] if isinstance(pattern, str) else list(pattern)
@@ -272,7 +299,8 @@ def nwgrep(
         if highlight:
             msg = "highlight and count parameters are incompatible"
             raise ValueError(msg)
-        return int(result.select(nw.len()).collect().item())
+        count_value = result.select(nw.len()).collect().item()
+        return cast("int", count_value)
 
     # Handle highlighting
     if highlight:

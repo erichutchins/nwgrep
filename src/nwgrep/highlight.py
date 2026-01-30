@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import narwhals as nw
+
+if TYPE_CHECKING:
+    from great_tables import GT
+    from pandas.io.formats.style import Styler
 
 from nwgrep.core import _build_column_match, _get_search_columns
 
@@ -75,7 +79,7 @@ def _get_matching_mask_dict(
     return mask_df.to_dict(as_series=False)
 
 
-def _highlight_pandas_dataframe(df: Any, config: HighlightConfig) -> Any:
+def _highlight_pandas_dataframe(df: Any, config: HighlightConfig) -> Styler:
     """Highlight matching cells in a pandas DataFrame with yellow background."""
     # Get mask of matching cells
     mask = _get_matching_mask_dict(df, config)
@@ -97,7 +101,7 @@ def _highlight_pandas_dataframe(df: Any, config: HighlightConfig) -> Any:
     )
 
 
-def _highlight_polars_dataframe(df: Any, config: HighlightConfig) -> Any:
+def _highlight_polars_dataframe(df: Any, config: HighlightConfig) -> GT:
     """Highlight matching cells in a polars DataFrame using Great Tables."""
     try:
         from great_tables import GT, loc, style
@@ -127,7 +131,7 @@ def _highlight_polars_dataframe(df: Any, config: HighlightConfig) -> Any:
     return gt
 
 
-def apply_highlighting(df_native: Any, config: HighlightConfig) -> Any:
+def apply_highlighting(df_native: Any, config: HighlightConfig) -> Styler | GT:
     """Apply cell-level highlighting based on the dataframe backend."""
     backend = _detect_backend(df_native)
     match backend:
