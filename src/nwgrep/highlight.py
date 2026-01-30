@@ -127,23 +127,8 @@ def _highlight_polars_dataframe(df: Any, config: HighlightConfig) -> Any:
     return gt
 
 
-def apply_highlighting(
-    df_native: Any,
-    patterns: list[str],
-    case_sensitive: bool,  # noqa: FBT001
-    regex: bool,  # noqa: FBT001
-    exact: bool,  # noqa: FBT001
-    search_cols: list[str] | None,
-) -> Any:
+def apply_highlighting(df_native: Any, config: HighlightConfig) -> Any:
     """Apply cell-level highlighting based on the dataframe backend."""
-    config = HighlightConfig(
-        patterns=patterns,
-        case_sensitive=case_sensitive,
-        regex=regex,
-        exact=exact,
-        search_cols=search_cols,
-    )
-
     backend = _detect_backend(df_native)
     match backend:
         case "pandas":

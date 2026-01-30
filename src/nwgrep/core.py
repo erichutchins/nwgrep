@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
     from narwhals.typing import FrameT
 
+    from nwgrep.highlight import HighlightConfig
+
 
 def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list[str]:
     """Determine which columns to search."""
@@ -91,11 +93,7 @@ def _build_match_expr(
 def _apply_highlighting_to_result(
     result: nw.LazyFrame,
     result_is_lazy: bool,  # noqa: FBT001
-    patterns: list[str],
-    case_sensitive: bool,  # noqa: FBT001
-    regex: bool,  # noqa: FBT001
-    exact: bool,  # noqa: FBT001
-    search_cols: list[str],
+    config: HighlightConfig,
 ) -> Any:
     """Handle all highlighting logic."""
     # Always collect if lazy (highlighting requires materialized data)
@@ -112,9 +110,7 @@ def _apply_highlighting_to_result(
     # Apply highlighting based on backend
     from nwgrep.highlight import apply_highlighting
 
-    return apply_highlighting(
-        native_df, patterns, case_sensitive, regex, exact, search_cols
-    )
+    return apply_highlighting(native_df, config)
 
 
 @overload
@@ -264,9 +260,16 @@ def nwgrep(
 
     # Handle highlighting
     if highlight:
-        return _apply_highlighting_to_result(
-            result, result_is_lazy, patterns, case_sensitive, regex, exact, search_cols
+        from nwgrep.highlight import HighlightConfig
+
+        config = HighlightConfig(
+            patterns=patterns,
+            case_sensitive=case_sensitive,
+            regex=regex,
+            exact=exact,
+            search_cols=search_cols,
         )
+        return _apply_highlighting_to_result(result, result_is_lazy, config)
 
     # Return in the same format as input (Narwhals or native)
     return nw.to_native(
