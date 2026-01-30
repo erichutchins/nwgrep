@@ -175,7 +175,7 @@ With specific backends:
 
 ```bash
 uv add nwgrep             # core library
-uv add nwgrep[cli]        # CLI for searching parquet/feather filesn using polars
+uv add nwgrep[cli]        # CLI for searching parquet/feather files using polars
 uv add nwgrep[notebook]   # highlighting in notebooks (pandas/polars)
 uv add nwgrep[all]        # include all features (cli + notebook)
 ```
