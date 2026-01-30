@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import math
-import re
 from typing import TYPE_CHECKING, Any
 
 import narwhals as nw
@@ -97,70 +95,63 @@ def _build_match_expr(
 
 def _detect_backend(df_native: Any) -> str:
     """Detect the dataframe backend (pandas, polars, or other)."""
-    module = type(df_native).__module__
-    if module.startswith("pandas"):
+    module = type(df_native).__module__.split(".")[0]
+    if module == "pandas":
         return "pandas"
-    if module.startswith("polars"):
+    if module == "polars":
         return "polars"
     return "unsupported"
 
 
-def _get_matching_cells(
+def _get_matching_mask_dict(
     df_native: Any,
     patterns: list[str],
     case_sensitive: bool,  # noqa: FBT001
     regex: bool,  # noqa: FBT001
+    exact: bool,  # noqa: FBT001
+    search_cols: list[str] | None,
 ) -> dict[str, list[bool]]:
-    """Build a mask of cells containing matches.
+    """Build a mask of cells containing matches using Narwhals."""
+    # Convert to Narwhals LazyFrame
+    nw_frame = nw.from_native(df_native, pass_through=True)
+    df_nw = nw_frame.lazy()
 
-    Returns a dict mapping column names to lists of booleans indicating matches.
-    """
-    mask: dict[str, list[bool]] = {}
+    # Determine columns to search
+    cols_to_check = _get_search_columns(df_nw, search_cols)
 
-    # Get column names and data
-    if isinstance(df_native.columns, list):  # polars
-        col_names = df_native.columns
-        col_data = {col: df_native[col].to_list() for col in col_names}
-    else:  # pandas
-        col_names = df_native.columns.tolist()
-        col_data = {col: df_native[col].astype(str).tolist() for col in col_names}
+    if not cols_to_check:
+        return {}
 
-    # For each column, check if cells match any pattern
-    for col in col_names:
-        col_mask = [
-            _cell_matches_pattern(cell, patterns, case_sensitive, regex)
-            for cell in col_data[col]
-        ]
-        mask[col] = col_mask
+    # Build boolean expression for each column
+    # For a cell to match, it must match ANY of the patterns
+    select_exprs = []
 
-    return mask
+    for col in cols_to_check:
+        col_expr = nw.col(col)
+        # Check against each pattern
+        pattern_matches = []
+        for pat in patterns:
+            match = _build_column_match(
+                col_expr, pat, case_sensitive=case_sensitive, regex=regex, exact=exact
+            )
+            # Match must be true and not null
+            pattern_matches.append(match & ~col_expr.is_null())
 
+        if pattern_matches:
+            # Combine pattern matches with OR
+            combined = nw.any_horizontal(*pattern_matches, ignore_nulls=True)
+            select_exprs.append(combined.alias(col))
+        else:
+            select_exprs.append(nw.lit(False).alias(col))
 
-def _cell_matches_pattern(
-    cell_val: Any,
-    patterns: list[str],
-    case_sensitive: bool,  # noqa: FBT001
-    regex: bool,  # noqa: FBT001
-) -> bool:
-    """Check if a cell value matches any of the patterns."""
-    # Skip null/None values
-    if cell_val is None or (isinstance(cell_val, float) and math.isnan(cell_val)):
-        return False
+    if not select_exprs:
+        return {}
 
-    cell_str = str(cell_val)
+    # Execute the query to get boolean dataframe
+    mask_df = df_nw.select(select_exprs).collect()
 
-    for pat in patterns:
-        if regex:
-            flags = 0 if case_sensitive else re.IGNORECASE
-            if re.search(pat, cell_str, flags):
-                return True
-        elif case_sensitive:
-            if pat in cell_str:
-                return True
-        elif pat.lower() in cell_str.lower():
-            return True
-
-    return False
+    # Convert to native dictionary of lists
+    return mask_df.to_dict(as_series=False)
 
 
 def _highlight_pandas_dataframe(
@@ -168,17 +159,22 @@ def _highlight_pandas_dataframe(
     patterns: list[str],
     case_sensitive: bool,  # noqa: FBT001
     regex: bool,  # noqa: FBT001
+    exact: bool,  # noqa: FBT001
+    search_cols: list[str] | None,
 ) -> Any:
     """Highlight matching cells in a pandas DataFrame with yellow background."""
     # Get mask of matching cells
-    mask = _get_matching_cells(df, patterns, case_sensitive, regex)
+    mask = _get_matching_mask_dict(
+        df, patterns, case_sensitive, regex, exact, search_cols
+    )
 
     # Build a boolean dataframe for styling
     import pandas as pd
 
     style_mask = pd.DataFrame(False, index=df.index, columns=df.columns)
     for col, col_mask in mask.items():
-        style_mask[col] = col_mask
+        if col in style_mask.columns:
+            style_mask[col] = col_mask
 
     return df.style.apply(
         lambda row: [
@@ -194,6 +190,8 @@ def _highlight_polars_dataframe(
     patterns: list[str],
     case_sensitive: bool,  # noqa: FBT001
     regex: bool,  # noqa: FBT001
+    exact: bool,  # noqa: FBT001
+    search_cols: list[str] | None,
 ) -> Any:
     """Highlight matching cells in a polars DataFrame using Great Tables."""
     try:
@@ -206,7 +204,9 @@ def _highlight_polars_dataframe(
         raise ImportError(msg) from e
 
     # Get mask of matching cells
-    mask = _get_matching_cells(df, patterns, case_sensitive, regex)
+    mask = _get_matching_mask_dict(
+        df, patterns, case_sensitive, regex, exact, search_cols
+    )
 
     # Build a boolean expression for matching cells
     gt = GT(df)
@@ -229,13 +229,19 @@ def _apply_highlighting(
     patterns: list[str],
     case_sensitive: bool,  # noqa: FBT001
     regex: bool,  # noqa: FBT001
+    exact: bool,  # noqa: FBT001
+    search_cols: list[str] | None,
 ) -> Any:
     """Apply cell-level highlighting based on the dataframe backend."""
     backend = _detect_backend(df_native)
     if backend == "pandas":
-        return _highlight_pandas_dataframe(df_native, patterns, case_sensitive, regex)
+        return _highlight_pandas_dataframe(
+            df_native, patterns, case_sensitive, regex, exact, search_cols
+        )
     if backend == "polars":
-        return _highlight_polars_dataframe(df_native, patterns, case_sensitive, regex)
+        return _highlight_polars_dataframe(
+            df_native, patterns, case_sensitive, regex, exact, search_cols
+        )
     msg = f"Highlighting not supported for backend: {backend}"
     raise ValueError(msg)
 
@@ -276,7 +282,7 @@ def nwgrep(
     exact : bool, default False
         Exact match - use equality for fixed strings, anchored regex otherwise
     highlight : bool, default False
-        Highlight matching rows with yellow background (pandas/polars only, for notebooks)
+        Highlight matching cells with yellow background (pandas/polars only, for notebooks)
 
     Returns:
     -------
@@ -376,7 +382,11 @@ def nwgrep(
         native_df = nw.to_native(result_collected, pass_through=True)
 
         # Apply highlighting based on backend
-        return _apply_highlighting(native_df, patterns, case_sensitive, regex)
+        # Note: patterns may be transformed (e.g., by whole_word), and regex/exact
+        # flags should reflect the actual matching logic used
+        return _apply_highlighting(
+            native_df, patterns, case_sensitive, regex, exact, search_cols
+        )
 
     # Return in the same format as input (Narwhals or native)
     return nw.to_native(

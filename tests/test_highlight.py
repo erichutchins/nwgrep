@@ -177,7 +177,34 @@ class TestHighlightEdgeCases:
         assert hasattr(result, "to_html")
         assert len(result.data) == 1
 
+    def test_highlight_with_whole_word(self) -> None:
+        """Test highlighting with whole_word parameter."""
+        df = pd.DataFrame({"col": ["foo", "foobar", "bar foo"]})
+        result = nwgrep(df, "foo", whole_word=True, highlight=True)
+
+        assert hasattr(result, "to_html")
+        # Should match "foo" and "bar foo" but not "foobar"
+        assert len(result.data) == 2
+
+    def test_highlight_with_exact_match(self) -> None:
+        """Test highlighting with exact match parameter."""
+        df = pd.DataFrame({"col": ["foo", "foobar", "FOO"]})
+        result = nwgrep(df, "foo", exact=True, highlight=True)
+
+        assert hasattr(result, "to_html")
+        # Should only match exactly "foo"
+        assert len(result.data) == 1
+        assert result.data.iloc[0]["col"] == "foo"
+
     def test_highlight_unsupported_backend(self) -> None:
         """Test highlighting with unsupported backend."""
-        # This would be tricky to test since most backends are supported
-        # We'd need to mock a dataframe type or use a real unsupported one
+        from unittest.mock import patch
+
+        df = pd.DataFrame({"col": ["foo"]})
+
+        # Patch _detect_backend to return "unsupported"
+        with (
+            patch("nwgrep.core._detect_backend", return_value="unsupported"),
+            pytest.raises(ValueError, match="Highlighting not supported"),
+        ):
+            nwgrep(df, "foo", highlight=True)
