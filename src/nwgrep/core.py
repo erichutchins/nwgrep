@@ -234,7 +234,7 @@ def nwgrep(
         if highlight:
             msg = "highlight and count parameters are incompatible"
             raise ValueError(msg)
-        return result.select(nw.len()).collect().item()
+        return int(result.select(nw.len()).collect().item())
 
     # Handle highlighting
     if highlight:

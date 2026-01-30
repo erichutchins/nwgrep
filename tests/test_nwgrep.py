@@ -242,3 +242,19 @@ def test_exact_match_no_matches(
     res_pd = to_pandas(result)
 
     assert len(res_pd) == 0
+
+
+def test_exact_match_alternation(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with regex alternation."""
+    data = {"col": ["foo", "bar", "foobar", "baz"]}
+    df = constructor(data)
+
+    # Without (?:) grouping, ^foo|bar$ would match "foobar" (the ^foo part)
+    # With (?:) grouping, ^(?:foo|bar)$ correctly matches only "foo" and "bar"
+    result = nwgrep(df, "foo|bar", exact=True, regex=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"foo", "bar"}
