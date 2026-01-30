@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import re
+from typing import TYPE_CHECKING, Literal, overload
 
 import narwhals as nw
 
@@ -12,9 +13,10 @@ if TYPE_CHECKING:
 
 def _get_search_columns(df: nw.LazyFrame, columns: Sequence[str] | None) -> list[str]:
     """Determine which columns to search."""
-    schema = df.collect_schema()
     if columns:
         return list(columns)
+
+    schema = df.collect_schema()
 
     # Search all string-like columns
     return [
@@ -41,7 +43,7 @@ def _build_exact_match(
     """Build exact match expression (equality or anchored regex)."""
     if regex:
         # Wrap pattern with anchors for exact regex matching
-        anchored_pattern = f"^{pat}$"
+        anchored_pattern = f"^(?:{pat})$"
         if case_sensitive:
             return expr.str.contains(anchored_pattern, literal=False)
         return expr.str.to_lowercase().str.contains(
@@ -74,23 +76,51 @@ def _build_match_expr(
     case_sensitive: bool,
     regex: bool,
     exact: bool,
-) -> list[nw.Expr]:
+) -> nw.Expr:
     """Build matching expressions for each pattern."""
-    match_exprs = []
+    exprs = []
     for pat in patterns:
-        col_matches = []
-        for col in search_cols:
-            expr = nw.col(col)
-            null_check = expr.is_null()
-
-            match = _build_column_match(
-                expr, pat, case_sensitive=case_sensitive, regex=regex, exact=exact
+        per_col = [
+            _build_column_match(
+                nw.col(c), pat, case_sensitive=case_sensitive, regex=regex, exact=exact
             )
-            col_matches.append(match & ~null_check)
+            for c in search_cols
+        ]
+        exprs.append(nw.any_horizontal(*per_col, ignore_nulls=True))
 
-        if col_matches:
-            match_exprs.append(nw.any_horizontal(*col_matches, ignore_nulls=True))
-    return match_exprs
+    return nw.any_horizontal(*exprs, ignore_nulls=True)
+
+
+@overload
+def nwgrep(
+    df: FrameT,
+    pattern: str | Sequence[str],
+    *,
+    columns: Sequence[str] | None = None,
+    case_sensitive: bool = True,
+    regex: bool = False,
+    invert: bool = False,
+    whole_word: bool = False,
+    count: Literal[True],
+    exact: bool = False,
+    highlight: bool = False,
+) -> int: ...
+
+
+@overload
+def nwgrep(
+    df: FrameT,
+    pattern: str | Sequence[str],
+    *,
+    columns: Sequence[str] | None = None,
+    case_sensitive: bool = True,
+    regex: bool = False,
+    invert: bool = False,
+    whole_word: bool = False,
+    count: Literal[False] = False,
+    exact: bool = False,
+    highlight: bool = False,
+) -> FrameT: ...
 
 
 def nwgrep(
@@ -105,7 +135,7 @@ def nwgrep(
     count: bool = False,
     exact: bool = False,
     highlight: bool = False,
-) -> FrameT | int | Any:
+) -> FrameT | int:
     """Grep-like filtering for dataframes across any backend.
 
     Parameters
@@ -184,36 +214,27 @@ def nwgrep(
 
     # Adjust pattern for whole word matching
     if whole_word:
-        patterns = [rf"\b{pat}\b" for pat in patterns]
+        patterns = [rf"\b{re.escape(pat)}\b" for pat in patterns]
         regex = True
 
     # Build matching expressions for each pattern
-    match_exprs = _build_match_expr(
+    match_expr = _build_match_expr(
         search_cols, patterns, case_sensitive=case_sensitive, regex=regex, exact=exact
     )
 
-    if not match_exprs:
-        # No valid expressions, return based on invert
-        result = df_nw.filter(nw.lit(invert))
-    else:
-        # Any pattern matches (OR logic across patterns)
-        if len(match_exprs) == 1:
-            final_match = match_exprs[0]
-        else:
-            final_match = nw.any_horizontal(*match_exprs, ignore_nulls=True)
+    # Invert if requested (grep -v)
+    mask = match_expr
+    if invert:
+        mask = ~mask
 
-        # Invert if requested (grep -v)
-        if invert:
-            final_match = ~final_match
-
-        result = df_nw.filter(final_match)
+    result = df_nw.filter(mask)
 
     # If count requested, return integer count
     if count:
         if highlight:
             msg = "highlight and count parameters are incompatible"
             raise ValueError(msg)
-        return result.collect().shape[0]
+        return result.select(nw.len()).collect().item()
 
     # Handle highlighting
     if highlight:

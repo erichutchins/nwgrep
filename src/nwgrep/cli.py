@@ -244,7 +244,9 @@ def main() -> None:
 
     try:
         # Use nwgrep with polars LazyFrame, get back polars (or int if count)
-        result = nwgrep(
+        # we ignore the overload here because: the count parameter from argparse has
+        # type bool (not narrowed to Literal[True] or Literal[False])
+        result = nwgrep(  # type: ignore[no-matching-overload]
             df,
             args.pattern,
             columns=columns,
