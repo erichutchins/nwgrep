@@ -81,40 +81,47 @@ jobs:
         version-level: [minimum, latest]
         include:
           # Minimum versions (aligned with narwhals minimum requirements)
+          # Use Python 3.9 for minimum versions (old pandas/numpy don't support newer Python)
           - backend: pandas
             version-level: minimum
+            python-version: "3.9"
             pandas-version: "==1.1.3"
             polars-version: ""
             pyarrow-version: ""
             narwhals-version: "==2.15.0"
           - backend: polars
             version-level: minimum
+            python-version: "3.9"
             pandas-version: "==1.1.3"
             polars-version: "==0.20.4"
             pyarrow-version: "==13.0.0"
             narwhals-version: "==2.15.0"
           - backend: pyarrow
             version-level: minimum
+            python-version: "3.9"
             pandas-version: "==1.1.3"
             polars-version: ""
             pyarrow-version: "==13.0.0"
             narwhals-version: "==2.15.0"
 
-          # Latest versions
+          # Latest versions (use Python 3.12)
           - backend: pandas
             version-level: latest
+            python-version: "3.12"
             pandas-version: ""
             polars-version: ""
             pyarrow-version: ""
             narwhals-version: ""
           - backend: polars
             version-level: latest
+            python-version: "3.12"
             pandas-version: ""
             polars-version: ""
             pyarrow-version: ""
             narwhals-version: ""
           - backend: pyarrow
             version-level: latest
+            python-version: "3.12"
             pandas-version: ""
             polars-version: ""
             pyarrow-version: ""
@@ -127,9 +134,11 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          cache-suffix: ${{ matrix.backend }}-${{ matrix.version-level }}-${{ matrix.python-version }}
+          cache-dependency-glob: "pyproject.toml"
 
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies with ${{ matrix.backend }} (${{ matrix.version-level }})
         run: |
@@ -137,47 +146,47 @@ jobs:
             # For minimum versions: use uv pip install with explicit pins
             # This bypasses the lockfile to ensure exact version control
 
-            # Create virtual environment with Python 3.12 (old pandas/numpy don't support 3.14)
-            uv venv --python 3.12
+            # Create virtual environment with specified Python version
+            uv venv --python ${{ matrix.python-version }}
 
             # Install base project dependencies (editable mode)
-            uv pip install -e .
+            uv pip install -e . --system
 
             # Install test dependencies
-            uv pip install pytest>=7.0.0 pytest-cov>=4.0.0
+            uv pip install pytest>=7.0.0 pytest-cov>=4.0.0 --system
 
             # Install narwhals at minimum version
             if [ -n "${{ matrix.narwhals-version }}" ]; then
-              uv pip install "narwhals${{ matrix.narwhals-version }}"
+              uv pip install "narwhals${{ matrix.narwhals-version }}" --system
             fi
 
             # Install backend packages at minimum versions
             if [ -n "${{ matrix.pandas-version }}" ]; then
-              uv pip install "pandas${{ matrix.pandas-version }}"
+              uv pip install "pandas${{ matrix.pandas-version }}" --system
             fi
             if [ -n "${{ matrix.polars-version }}" ]; then
-              uv pip install "polars${{ matrix.polars-version }}"
+              uv pip install "polars${{ matrix.polars-version }}" --system
             fi
             if [ -n "${{ matrix.pyarrow-version }}" ]; then
-              uv pip install "pyarrow${{ matrix.pyarrow-version }}"
+              uv pip install "pyarrow${{ matrix.pyarrow-version }}" --system
             fi
 
             # Install jinja2 (required for pandas.DataFrame.style)
-            uv pip install jinja2
+            uv pip install jinja2 --system
           else
             # For latest versions: sync base deps then upgrade backends
-            uv sync --python 3.12 --group dev
+            uv sync --python ${{ matrix.python-version }} --group dev
 
             # Upgrade to latest available versions of backends and narwhals
             case "${{ matrix.backend }}" in
               pandas)
-                uv pip install --upgrade pandas narwhals
+                uv pip install --upgrade pandas narwhals --system
                 ;;
               polars)
-                uv pip install --upgrade polars pyarrow pandas narwhals
+                uv pip install --upgrade polars pyarrow pandas narwhals --system
                 ;;
               pyarrow)
-                uv pip install --upgrade pyarrow pandas narwhals
+                uv pip install --upgrade pyarrow pandas narwhals --system
                 ;;
             esac
           fi
@@ -189,4 +198,4 @@ jobs:
 
       - name: Run tests for ${{ matrix.backend }}
         run: |
-          uv run --python 3.12 pytest -v -k "test_" --backend=${{ matrix.backend }}
+          uv run --python ${{ matrix.python-version }} pytest -v -k "test_" --backend=${{ matrix.backend }}
