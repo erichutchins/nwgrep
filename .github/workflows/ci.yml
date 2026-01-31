@@ -137,8 +137,8 @@ jobs:
             # For minimum versions: use uv pip install with explicit pins
             # This bypasses the lockfile to ensure exact version control
 
-            # Create virtual environment first
-            uv venv
+            # Create virtual environment with Python 3.12 (old pandas/numpy don't support 3.14)
+            uv venv --python 3.12
 
             # Install base project dependencies (editable mode)
             uv pip install -e .
