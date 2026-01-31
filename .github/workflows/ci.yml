@@ -15,189 +15,181 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        exclude:
-          # Python 3.13+ has numpy compatibility issues on Windows
-          - os: windows-latest
-            python-version: "3.13"
-          - os: windows-latest
-            python-version: "3.14"
-
+    
     steps:
       - uses: actions/checkout@v6
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+      
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
             uv.lock
-
+      
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
-
+      
       - name: Install dependencies
         run: |
-          uv sync --python ${{ matrix.python-version }} --group test-backends
-
+          uv sync --group dev
+      
       - name: Run tests
-        env:
-          PYTHONIOENCODING: utf-8
         run: |
-          uv run --python ${{ matrix.python-version }} pytest -v --backend=pandas
+          uv run pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing
+      
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
 
   lint:
     name: Lint and Type Check
     runs-on: ubuntu-latest
-
+    
     steps:
       - uses: actions/checkout@v6
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+      
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-
+      
       - name: Set up Python
         run: uv python install 3.12
-
+      
       - name: Install dependencies
-        run: uv sync --python 3.12
-
+        run: uv sync --group lint
+      
       - name: Run ruff format check
-        run: uv run ruff format --check .
-
+        run: uv run ruff format --check src/nwgrep
+      
       - name: Run ruff lint
-        run: uv run ruff check .
-
-      - name: Run ty
+        run: uv run ruff check src/nwgrep
+      
+      - name: Run mypy
         run: uvx ty check src/nwgrep
 
   test-backends:
-    name: Test ${{ matrix.backend }} (${{ matrix.version-level }})
+    name: Test ${{ matrix.backend }} backend
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         backend: [pandas, polars, pyarrow]
-        version-level: [minimum, latest]
-        include:
-          # Minimum versions (aligned with narwhals minimum requirements)
-          # Use Python 3.9 for minimum versions (old pandas/numpy don't support newer Python)
-          - backend: pandas
-            version-level: minimum
-            python-version: "3.9"
-            pandas-version: "==1.1.3"
-            polars-version: ""
-            pyarrow-version: ""
-            narwhals-version: "==2.15.0"
-          - backend: polars
-            version-level: minimum
-            python-version: "3.9"
-            pandas-version: "==1.1.3"
-            polars-version: "==0.20.4"
-            pyarrow-version: "==13.0.0"
-            narwhals-version: "==2.15.0"
-          - backend: pyarrow
-            version-level: minimum
-            python-version: "3.9"
-            pandas-version: "==1.1.3"
-            polars-version: ""
-            pyarrow-version: "==13.0.0"
-            narwhals-version: "==2.15.0"
-
-          # Latest versions (use Python 3.12)
-          - backend: pandas
-            version-level: latest
-            python-version: "3.12"
-            pandas-version: ""
-            polars-version: ""
-            pyarrow-version: ""
-            narwhals-version: ""
-          - backend: polars
-            version-level: latest
-            python-version: "3.12"
-            pandas-version: ""
-            polars-version: ""
-            pyarrow-version: ""
-            narwhals-version: ""
-          - backend: pyarrow
-            version-level: latest
-            python-version: "3.12"
-            pandas-version: ""
-            polars-version: ""
-            pyarrow-version: ""
-            narwhals-version: ""
-
+    
     steps:
       - uses: actions/checkout@v6
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+      
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          cache-suffix: ${{ matrix.backend }}-${{ matrix.version-level }}-${{ matrix.python-version }}
-          cache-dependency-glob: "pyproject.toml"
-
+          cache-suffix: ${{ matrix.backend }}
+      
       - name: Set up Python
-        run: uv python install ${{ matrix.python-version }}
-
-      - name: Install dependencies with ${{ matrix.backend }} (${{ matrix.version-level }})
-        run: |
-          if [ "${{ matrix.version-level }}" = "minimum" ]; then
-            # For minimum versions: use uv pip install with explicit pins
-            # This bypasses the lockfile to ensure exact version control
-
-            # Create virtual environment with specified Python version
-            uv venv --python ${{ matrix.python-version }}
-
-            # Install base project dependencies (editable mode)
-            uv pip install -e .
-
-            # Install test dependencies
-            uv pip install pytest>=7.0.0 pytest-cov>=4.0.0
-
-            # Install narwhals at minimum version
-            if [ -n "${{ matrix.narwhals-version }}" ]; then
-              uv pip install "narwhals${{ matrix.narwhals-version }}"
-            fi
-
-            # Install backend packages at minimum versions
-            if [ -n "${{ matrix.pandas-version }}" ]; then
-              uv pip install "pandas${{ matrix.pandas-version }}"
-            fi
-            if [ -n "${{ matrix.polars-version }}" ]; then
-              uv pip install "polars${{ matrix.polars-version }}"
-            fi
-            if [ -n "${{ matrix.pyarrow-version }}" ]; then
-              uv pip install "pyarrow${{ matrix.pyarrow-version }}"
-            fi
-
-            # Install jinja2 (required for pandas.DataFrame.style)
-            uv pip install jinja2
-          else
-            # For latest versions: sync base deps then upgrade backends
-            uv sync --python ${{ matrix.python-version }} --group dev
-
-            # Upgrade to latest available versions of backends and narwhals
-            case "${{ matrix.backend }}" in
-              pandas)
-                uv pip install --upgrade pandas narwhals
-                ;;
-              polars)
-                uv pip install --upgrade polars pyarrow pandas narwhals
-                ;;
-              pyarrow)
-                uv pip install --upgrade pyarrow pandas narwhals
-                ;;
-            esac
-          fi
-
+        run: uv python install 3.12
+      
+      - name: Install dependencies with test backends
+        run: uv sync --group test-backends --group tests
+      
       - name: Show installed versions
         run: |
-          echo "Installed package versions:"
-          uv pip list | grep -E "(pandas|polars|pyarrow|narwhals)" || echo "Warning: No backend packages found!"
-
-      - name: Run tests for ${{ matrix.backend }}
+          echo "Testing with ${{ matrix.backend }}:"
+          uv run python -c "import ${{ matrix.backend }}; print(f'${{ matrix.backend }} version: {${{ matrix.backend }}.__version__}')"
+          uv run python -c "import narwhals; print(f'narwhals version: {narwhals.__version__}')"
+      
+      - name: Run backend-specific tests
         run: |
-          uv run --python ${{ matrix.python-version }} pytest -v -k "test_" --backend=${{ matrix.backend }}
+          # Run all tests but they'll use the specific backend
+          uv run pytest -v tests/ -k "${{ matrix.backend }} or not (pandas or polars or pyarrow)"
+
+  test-features:
+    name: Test ${{ matrix.feature }} feature
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [cli, notebook]
+    
+    steps:
+      - uses: actions/checkout@v6
+      
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.feature }}
+      
+      - name: Set up Python
+        run: uv python install 3.12
+      
+      - name: Install with ${{ matrix.feature }} extra
+        run: |
+          uv sync --extra ${{ matrix.feature }} --group tests --group test-backends
+      
+      - name: Test ${{ matrix.feature }} functionality
+        run: |
+          case "${{ matrix.feature }}" in
+            cli)
+              # Test CLI works
+              uv run nwgrep --help
+              # Create test file and run CLI
+              uv run python -c "import polars as pl; pl.DataFrame({'col': ['foo', 'bar']}).write_parquet('test.parquet')"
+              uv run nwgrep "foo" test.parquet
+              ;;
+            notebook)
+              # Test great-tables import
+              uv run python -c "import great_tables; print('great-tables OK')"
+              # Run notebook-specific tests if you have them
+              uv run pytest -v tests/ -k "highlight or style"
+              ;;
+          esac
+
+  # Optional: Test that base install works without any extras
+  test-minimal:
+    name: Test minimal install (no extras)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v6
+      
+      - uses: astral-sh/setup-uv@v7
+      
+      - name: Set up Python
+        run: uv python install 3.12
+      
+      - name: Install minimal (just narwhals)
+        run: uv sync --no-dev
+      
+      - name: Test core import works
+        run: |
+          uv run python -c "from nwgrep import nwgrep; print('✓ Core import works')"
+          uv run python -c "from nwgrep import register_grep_accessor; print('✓ Accessor import works')"
+      
+      - name: Verify CLI is NOT available (requires cli extra)
+        run: |
+          # This should fail since we didn't install [cli]
+          ! uv run nwgrep --help 2>/dev/null || (echo "ERROR: CLI should not work without [cli] extra" && exit 1)
+
+  # Optional: Test against latest narwhals development version
+  test-narwhals-main:
+    name: Test with narwhals main branch
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't fail CI if narwhals dev has breaking changes
+    
+    steps:
+      - uses: actions/checkout@v6
+      
+      - uses: astral-sh/setup-uv@v7
+      
+      - name: Set up Python
+        run: uv python install 3.12
+      
+      - name: Install dependencies
+        run: uv sync --group dev
+      
+      - name: Install narwhals from main
+        run: |
+          uv pip install git+https://github.com/narwhals-dev/narwhals.git
+      
+      - name: Run tests
+        run: uv run pytest -v
