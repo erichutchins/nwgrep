@@ -41,6 +41,8 @@ jobs:
           uv sync --python ${{ matrix.python-version }} --group test-backends
 
       - name: Run tests
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           uv run --python ${{ matrix.python-version }} pytest -v --backend=pandas
 
@@ -150,29 +152,29 @@ jobs:
             uv venv --python ${{ matrix.python-version }}
 
             # Install base project dependencies (editable mode)
-            uv pip install -e . --system
+            uv pip install -e .
 
             # Install test dependencies
-            uv pip install pytest>=7.0.0 pytest-cov>=4.0.0 --system
+            uv pip install pytest>=7.0.0 pytest-cov>=4.0.0
 
             # Install narwhals at minimum version
             if [ -n "${{ matrix.narwhals-version }}" ]; then
-              uv pip install "narwhals${{ matrix.narwhals-version }}" --system
+              uv pip install "narwhals${{ matrix.narwhals-version }}"
             fi
 
             # Install backend packages at minimum versions
             if [ -n "${{ matrix.pandas-version }}" ]; then
-              uv pip install "pandas${{ matrix.pandas-version }}" --system
+              uv pip install "pandas${{ matrix.pandas-version }}"
             fi
             if [ -n "${{ matrix.polars-version }}" ]; then
-              uv pip install "polars${{ matrix.polars-version }}" --system
+              uv pip install "polars${{ matrix.polars-version }}"
             fi
             if [ -n "${{ matrix.pyarrow-version }}" ]; then
-              uv pip install "pyarrow${{ matrix.pyarrow-version }}" --system
+              uv pip install "pyarrow${{ matrix.pyarrow-version }}"
             fi
 
             # Install jinja2 (required for pandas.DataFrame.style)
-            uv pip install jinja2 --system
+            uv pip install jinja2
           else
             # For latest versions: sync base deps then upgrade backends
             uv sync --python ${{ matrix.python-version }} --group dev
@@ -180,13 +182,13 @@ jobs:
             # Upgrade to latest available versions of backends and narwhals
             case "${{ matrix.backend }}" in
               pandas)
-                uv pip install --upgrade pandas narwhals --system
+                uv pip install --upgrade pandas narwhals
                 ;;
               polars)
-                uv pip install --upgrade polars pyarrow pandas narwhals --system
+                uv pip install --upgrade polars pyarrow pandas narwhals
                 ;;
               pyarrow)
-                uv pip install --upgrade pyarrow pandas narwhals --system
+                uv pip install --upgrade pyarrow pandas narwhals
                 ;;
             esac
           fi
