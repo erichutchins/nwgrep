@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --python ${{ matrix.python-version }} --extra pandas
+          uv sync --python ${{ matrix.python-version }} --group test-backends
 
       - name: Run tests
         run: |
@@ -136,6 +136,9 @@ jobs:
           if [ "${{ matrix.version-level }}" = "minimum" ]; then
             # For minimum versions: use uv pip install with explicit pins
             # This bypasses the lockfile to ensure exact version control
+
+            # Create virtual environment first
+            uv venv
 
             # Install base project dependencies (editable mode)
             uv pip install -e .
