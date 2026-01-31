@@ -59,7 +59,7 @@ docs = [
 ]
 # Notebook styling (mirrors optional-dependencies.notebook for dev group)
 notebook = [
-    "great-tables>=0.15.0",
+    "nwgrep[notebook]"
 ]
 # Development: tests + lint + test-backends + notebook
 dev = [

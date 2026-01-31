@@ -72,19 +72,47 @@ jobs:
         run: uvx ty check src/nwgrep
 
   test-backends:
-    name: Test with ${{ matrix.backend }}
+    name: Test ${{ matrix.backend }} (${{ matrix.version-level }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         backend: [pandas, polars, pyarrow]
+        version-level: [minimum, latest]
         include:
+          # Minimum versions (aligned with narwhals)
           - backend: pandas
-            extras: "pandas"
+            version-level: minimum
+            pandas-version: "==1.1.3"
+            polars-version: ""
+            pyarrow-version: ""
           - backend: polars
-            extras: "polars,pyarrow"
+            version-level: minimum
+            pandas-version: ""
+            polars-version: "==0.20.4"
+            pyarrow-version: "==13.0.0"
           - backend: pyarrow
-            extras: "pyarrow,pandas"
+            version-level: minimum
+            pandas-version: "==1.1.3"
+            polars-version: ""
+            pyarrow-version: "==13.0.0"
+          
+          # Latest versions
+          - backend: pandas
+            version-level: latest
+            pandas-version: ""
+            polars-version: ""
+            pyarrow-version: ""
+          - backend: polars
+            version-level: latest
+            pandas-version: ""
+            polars-version: ""
+            pyarrow-version: ""
+          - backend: pyarrow
+            version-level: latest
+            pandas-version: ""
+            polars-version: ""
+            pyarrow-version: ""
 
     steps:
       - uses: actions/checkout@v6
@@ -97,19 +125,26 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Install with ${{ matrix.backend }}
+      - name: Install base dependencies
         run: |
-          case "${{ matrix.backend }}" in
-            pandas)
-              uv sync --python 3.12 --extra pandas
-              ;;
-            polars)
-              uv sync --python 3.12 --extra polars --extra pyarrow --extra pandas
-              ;;
-            pyarrow)
-              uv sync --python 3.12 --extra pyarrow --extra pandas
-              ;;
-          esac
+          uv sync --python 3.12 --group dev
+
+      - name: Install ${{ matrix.backend }} (${{ matrix.version-level }})
+        run: |
+          # Install specific versions based on matrix configuration
+          if [ -n "${{ matrix.pandas-version }}" ]; then
+            uv pip install "pandas${{ matrix.pandas-version }}"
+          fi
+          if [ -n "${{ matrix.polars-version }}" ]; then
+            uv pip install "polars${{ matrix.polars-version }}"
+          fi
+          if [ -n "${{ matrix.pyarrow-version }}" ]; then
+            uv pip install "pyarrow${{ matrix.pyarrow-version }}"
+          fi
+
+      - name: Show installed versions
+        run: |
+          uv pip list | grep -E "(pandas|polars|pyarrow|narwhals)"
 
       - name: Run tests for ${{ matrix.backend }}
         run: |
