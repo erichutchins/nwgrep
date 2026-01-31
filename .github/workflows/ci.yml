@@ -15,7 +15,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-    
+        exclude:
+          # Python 3.13+ has numpy compatibility issues on Windows
+          - os: windows-latest
+            python-version: "3.13"
+          - os: windows-latest
+            python-version: "3.14"
+            
     steps:
       - uses: actions/checkout@v6
       
@@ -31,18 +37,11 @@ jobs:
       
       - name: Install dependencies
         run: |
-          uv sync --group dev
+          uv sync --group dev --python ${{ matrix.python-version }}
       
       - name: Run tests
         run: |
-          uv run pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing
-      
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
+          uv run pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing --python ${{ matrix.python-version }}
 
   lint:
     name: Lint and Type Check
@@ -59,7 +58,7 @@ jobs:
         run: uv python install 3.12
       
       - name: Install dependencies
-        run: uv sync --group lint
+        run: uv sync --group lint --python 3.12
       
       - name: Run ruff format check
         run: uv run ruff format --check src/nwgrep
@@ -90,7 +89,7 @@ jobs:
         run: uv python install 3.12
       
       - name: Install dependencies with test backends
-        run: uv sync --group test-backends --group tests
+        run: uv sync --group test-backends --group tests --python 3.12
       
       - name: Show installed versions
         run: |
@@ -124,7 +123,7 @@ jobs:
       
       - name: Install with ${{ matrix.feature }} extra
         run: |
-          uv sync --extra ${{ matrix.feature }} --group tests --group test-backends
+          uv sync --extra ${{ matrix.feature }} --group tests --group test-backends --python 3.12
       
       - name: Test ${{ matrix.feature }} functionality
         run: |
@@ -158,7 +157,7 @@ jobs:
         run: uv python install 3.12
       
       - name: Install minimal (just narwhals)
-        run: uv sync --no-dev
+        run: uv sync --no-dev --python 3.12
       
       - name: Test core import works
         run: |
@@ -185,7 +184,7 @@ jobs:
         run: uv python install 3.12
       
       - name: Install dependencies
-        run: uv sync --group dev
+        run: uv sync --group dev --python 3.12
       
       - name: Install narwhals from main
         run: |
