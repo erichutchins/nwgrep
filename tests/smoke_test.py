@@ -30,15 +30,25 @@ except ImportError as e:
     msg = f"Failed to import nwgrep.accessor: {e}"
     raise RuntimeError(msg) from e
 
-# 3. Basic CLI help check
+# 3. Basic CLI help check (optional - skip if CLI dependencies not installed)
 try:
-    subprocess.run(
-        [sys.executable, "-m", "nwgrep.cli", "--help"], check=True, capture_output=True
+    result = subprocess.run(
+        [sys.executable, "-m", "nwgrep.cli", "--help"], check=False, capture_output=True
     )
-    print("CLI help check succeeded")
-except subprocess.CalledProcessError as e:
-    msg = f"CLI help check failed: {e.stderr.decode()}"
-    raise RuntimeError(msg) from e
+    if result.returncode == 0:
+        print("CLI help check succeeded")
+    else:
+        stderr = result.stderr.decode()
+        # Check if this is a missing dependencies error (expected when testing without [cli])
+        if "missing required dependencies" in stderr:
+            print(
+                "CLI dependencies not installed, skipping CLI test (expected for base install)"
+            )
+        else:
+            msg = f"CLI help check failed unexpectedly: {stderr}"
+            raise RuntimeError(msg)
+except FileNotFoundError:
+    print("CLI module not found, skipping CLI test")
 
 # 4. Functional check if a backend is available
 try:
