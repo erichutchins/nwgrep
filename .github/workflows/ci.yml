@@ -21,7 +21,7 @@ jobs:
             python-version: "3.13"
           - os: windows-latest
             python-version: "3.14"
-            
+
     steps:
       - uses: actions/checkout@v6
       
@@ -41,7 +41,7 @@ jobs:
       
       - name: Run tests
         run: |
-          uv run pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing --python ${{ matrix.python-version }}
+          uv run pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing
 
   lint:
     name: Lint and Type Check
@@ -157,14 +157,14 @@ jobs:
         run: uv python install 3.12
       
       - name: Install minimal (just narwhals)
-        run: uv sync --no-dev --python 3.12
+        run: uv sync --no-default-groups --python 3.12
       
       - name: Test core import works
         run: |
           uv run python -c "from nwgrep import nwgrep; print('✓ Core import works')"
           uv run python -c "from nwgrep import register_grep_accessor; print('✓ Accessor import works')"
       
-      - name: Verify CLI is NOT available (requires cli extra)
+      - name: Verify CLI is NOT av ailable (requires cli extra)
         run: |
           # This should fail since we didn't install [cli]
           ! uv run nwgrep --help 2>/dev/null || (echo "ERROR: CLI should not work without [cli] extra" && exit 1)

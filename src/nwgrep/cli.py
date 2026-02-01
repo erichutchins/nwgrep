@@ -101,8 +101,9 @@ def _check_polars() -> None:
     """Check that polars is installed, exit with helpful message if not."""
     if not HAS_POLARS:
         print(
-            "Error: The nwgrep CLI requires polars.\n"
-            "Install it with: pip install 'nwgrep[cli]'",
+            "The nwgrep command line client could not run because its missing "
+            "required dependencies.\nMake sure you've installed "
+            "everything with: uv add nwgrep[cli]",
             file=sys.stderr,
         )
         sys.exit(1)
