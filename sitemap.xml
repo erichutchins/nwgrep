@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/api/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/cli/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/contributing/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/installation/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/usage/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://erichutchins.github.io/nwgrep/vibecoding/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+</urlset>
