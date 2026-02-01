@@ -7,6 +7,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v6
+      
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      
+      - name: Set up Python
+        run: uv python install
+      
+      - name: Install dependencies
+        run: uv sync --group lint
+      
+      - name: Run ruff format check
+        run: uv run --locked ruff format --check src/nwgrep
+      
+      - name: Run ruff lint
+        run: uv run --locked ruff check src/nwgrep
+      
+      - name: Run ty
+        run: uvx ty check src/nwgrep
+
   test:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -43,33 +70,9 @@ jobs:
       - name: Run tests
         run: |
           uv run --locked pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing
-
-  lint:
-    name: Lint and Type Check
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v6
-      
-      - uses: astral-sh/setup-uv@v7
-        with:
-          python-version: "3.12"
-          enable-cache: true
-      
-      - name: Set up Python
-        run: uv python install
-      
-      - name: Install dependencies
-        run: uv sync --group lint
-      
-      - name: Run ruff format check
-        run: uv run --locked ruff format --check src/nwgrep
-      
-      - name: Run ruff lint
-        run: uv run --locked ruff check src/nwgrep
-      
-      - name: Run ty
-        run: uvx ty check src/nwgrep
+        env:
+          PYTHONUTF8: "1"  # Forces UTF-8 encoding for Python on Windows
+          PYTHONIOENCODING: "utf-8"  # Ensures I/O uses UTF-8
 
   test-backends:
     name: Test ${{ matrix.backend }} backend
