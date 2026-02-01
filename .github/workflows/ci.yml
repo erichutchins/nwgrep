@@ -27,21 +27,22 @@ jobs:
       
       - uses: astral-sh/setup-uv@v7
         with:
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
             uv.lock
       
       - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+        run: uv python install
       
       - name: Install dependencies
         run: |
-          uv sync --group dev --python ${{ matrix.python-version }}
+          uv sync --group dev
       
       - name: Run tests
         run: |
-          uv run --python ${{ matrix.python-version }} pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing
+          uv run --locked pytest -v --cov=nwgrep --cov-report=xml --cov-report=term-missing
 
   lint:
     name: Lint and Type Check
@@ -52,22 +53,23 @@ jobs:
       
       - uses: astral-sh/setup-uv@v7
         with:
+          python-version: "3.12"
           enable-cache: true
       
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install
       
       - name: Install dependencies
-        run: uv sync --group lint --python 3.12
+        run: uv sync --group lint
       
       - name: Run ruff format check
-        run: uv run ruff format --check src/nwgrep
+        run: uv run --locked ruff format --check src/nwgrep
       
       - name: Run ruff lint
-        run: uv run ruff check src/nwgrep
+        run: uv run --locked ruff check src/nwgrep
       
-      - name: Run mypy
-        run: uvx ty check src/nwgrep
+      - name: Run ty
+        run: uvx run ty check src/nwgrep
 
   test-backends:
     name: Test ${{ matrix.backend }} backend
@@ -82,25 +84,26 @@ jobs:
       
       - uses: astral-sh/setup-uv@v7
         with:
+          python-version: "3.12"
           enable-cache: true
           cache-suffix: ${{ matrix.backend }}
       
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install
       
       - name: Install dependencies with test backends
-        run: uv sync --group test-backends --group tests --python 3.12
+        run: uv sync --group test-backends --group tests
       
       - name: Show installed versions
         run: |
           echo "Testing with ${{ matrix.backend }}:"
-          uv run --python 3.12 python -c "import ${{ matrix.backend }}; print(f'${{ matrix.backend }} version: {${{ matrix.backend }}.__version__}')"
-          uv run --python 3.12 python -c "import narwhals; print(f'narwhals version: {narwhals.__version__}')"
+          uv run --locked python -c "import ${{ matrix.backend }}; print(f'${{ matrix.backend }} version: {${{ matrix.backend }}.__version__}')"
+          uv run --locked python -c "import narwhals; print(f'narwhals version: {narwhals.__version__}')"
       
       - name: Run backend-specific tests
         run: |
           # Run all tests but they'll use the specific backend
-          uv run --python 3.12 pytest -v tests/ -k "${{ matrix.backend }} or not (pandas or polars or pyarrow)"
+          uv run --locked pytest -v tests/ -k "${{ matrix.backend }} or not (pandas or polars or pyarrow)"
 
   test-features:
     name: Test ${{ matrix.feature }} feature
@@ -115,31 +118,32 @@ jobs:
       
       - uses: astral-sh/setup-uv@v7
         with:
+          python-version: "3.12"
           enable-cache: true
           cache-suffix: ${{ matrix.feature }}
       
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install
       
       - name: Install with ${{ matrix.feature }} extra
         run: |
-          uv sync --extra ${{ matrix.feature }} --group tests --group test-backends --python 3.12
+          uv sync --extra ${{ matrix.feature }} --group tests --group test-backends
       
       - name: Test ${{ matrix.feature }} functionality
         run: |
           case "${{ matrix.feature }}" in
             cli)
               # Test CLI works
-              uv run --python 3.12 nwgrep --help
+              uv run --locked nwgrep --help
               # Create test file and run CLI
-              uv run --python 3.12 python -c "import polars as pl; pl.DataFrame({'col': ['foo', 'bar']}).write_parquet('test.parquet')"
-              uv run --python 3.12nwgrep "foo" test.parquet
+              uv run --locked python -c "import polars as pl; pl.DataFrame({'col': ['foo', 'bar']}).write_parquet('test.parquet')"
+              uv run --lockednwgrep "foo" test.parquet
               ;;
             notebook)
               # Test great-tables import
-              uv run --python 3.12 python -c "import great_tables; print('great-tables OK')"
+              uv run --locked python -c "import great_tables; print('great-tables OK')"
               # Run notebook-specific tests if you have them
-              uv run --python 3.12 pytest -v tests/ -k "highlight or style"
+              uv run --locked pytest -v tests/ -k "highlight or style"
               ;;
           esac
 
@@ -152,22 +156,25 @@ jobs:
       - uses: actions/checkout@v6
       
       - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
       
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install
       
       - name: Install minimal (just narwhals)
-        run: uv sync --no-default-groups --python 3.12
+        run: uv sync --no-default-groups
       
       - name: Test core import works
         run: |
-          uv run --python 3.12 python -c "from nwgrep import nwgrep; print('✓ Core import works')"
-          uv run --python 3.12 python -c "from nwgrep import register_grep_accessor; print('✓ Accessor import works')"
+          uv run --locked --no-default-groups python -c "from nwgrep import nwgrep; print('✓ Core import works')"
+          uv run --locked --no-default-groups python -c "from nwgrep import register_grep_accessor; print('✓ Accessor import works')"
       
       - name: Verify CLI is NOT av ailable (requires cli extra)
         run: |
           # This should fail since we didn't install [cli]
-          ! uv run --python 3.12 --no-default-groups nwgrep --help 2>/dev/null || (echo "ERROR: CLI should not work without [cli] extra" && exit 1)
+          ! uv run --locked --no-default-groups nwgrep --help 2>/dev/null || (echo "ERROR: CLI should not work without [cli] extra" && exit 1)
 
   # Optional: Test against latest narwhals development version
   test-narwhals-main:
@@ -179,16 +186,15 @@ jobs:
       - uses: actions/checkout@v6
       
       - uses: astral-sh/setup-uv@v7
-      
-      - name: Set up Python
-        run: uv python install 3.12
+        with:
+          python-version: "3.12"
       
       - name: Install dependencies
-        run: uv sync --group dev --python 3.12
+        run: uv sync --group dev
       
       - name: Install narwhals from main
         run: |
-          uv pip --python 3.12 install git+https://github.com/narwhals-dev/narwhals.git
+          uv pip install git+https://github.com/narwhals-dev/narwhals.git
       
       - name: Run tests
-        run: uv run --python 3.12 pytest -v
+        run: uv run --locked pytest -v
