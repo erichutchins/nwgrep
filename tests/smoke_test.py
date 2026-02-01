@@ -19,13 +19,15 @@ if not nwgrep.__version__:
 
 # 2. Check that we can import main components
 try:
-    import importlib
+    import importlib.util
 
-    importlib.util.find_spec("nwgrep.register_grep_accessor")
-
-    print("Successfully imported register_grep_accessor")
+    spec = importlib.util.find_spec("nwgrep.accessor")
+    if spec is None:
+        msg = "Failed to find nwgrep.accessor module"
+        raise RuntimeError(msg)
+    print("Successfully found nwgrep.accessor module")
 except ImportError as e:
-    msg = f"Failed to import register_grep_accessor: {e}"
+    msg = f"Failed to import nwgrep.accessor: {e}"
     raise RuntimeError(msg) from e
 
 # 3. Basic CLI help check
@@ -43,7 +45,7 @@ try:
     import pandas as pd
 
     df = pd.DataFrame({"a": ["foo", "bar"], "b": ["baz", "qux"]})
-    result = nwgrep_func(df, "foo")
+    result = nwgrep_func(df, "foo")  # type: ignore[invalid-argument-type]
 
     # In pandas, result should be a DataFrame
     if len(result) == 1 and result.iloc[0, 0] == "foo":

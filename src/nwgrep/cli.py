@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import argparse
+import io
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-import narwhals as nw
+from typing import TYPE_CHECKING
 
 from nwgrep.core import nwgrep
 
 if TYPE_CHECKING:
-    from narwhals.typing import FrameT
+    import polars as pl
+
+try:
+    import polars as pl
+
+    HAS_POLARS = True
+except ImportError:
+    HAS_POLARS = False
 
 
 def _create_parser() -> argparse.ArgumentParser:
@@ -18,7 +24,7 @@ def _create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Grep for binary dataframes (Parquet, Feather, IPC) - search rows across any column.\n"
-            "Streaming NDJSON output is supported when 'polars' is installed."
+            "Requires polars: pip install 'nwgrep[cli]'"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -50,7 +56,19 @@ Examples:
         "-E", "--regex", action="store_true", help="Treat pattern as regex"
     )
     parser.add_argument(
+        "-F",
+        "--fixed-strings",
+        action="store_true",
+        help="Force literal string matching (disable regex)",
+    )
+    parser.add_argument(
         "-w", "--whole-word", action="store_true", help="Match whole words only"
+    )
+    parser.add_argument(
+        "-x",
+        "--exact",
+        action="store_true",
+        help="Exact match (equality or anchored regex)",
     )
     parser.add_argument(
         "-n",
@@ -60,16 +78,39 @@ Examples:
         help="Maximum number of rows to display",
     )
     parser.add_argument(
+        "--count",
+        action="store_true",
+        help="Print count of matching rows instead of rows themselves",
+    )
+    parser.add_argument(
+        "-l",
+        "--files-with-matches",
+        action="store_true",
+        help="Print only filenames with matches (like grep -l)",
+    )
+    parser.add_argument(
         "--format",
         choices=["table", "csv", "tsv", "ndjson"],
         default="table",
-        help="Output format. Use 'ndjson' with polars for streaming output.",
+        help="Output format (default: table)",
     )
     return parser
 
 
-def _load_file(file_path: Path) -> nw.DataFrame | nw.LazyFrame:
-    """Load a binary dataframe file based on its extension."""
+def _check_polars() -> None:
+    """Check that polars is installed, exit with helpful message if not."""
+    if not HAS_POLARS:
+        print(
+            "The nwgrep command line client could not run because its missing "
+            "required dependencies.\nMake sure you've installed "
+            "everything with: uv add nwgrep[cli]",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+def _load_file(file_path: Path) -> pl.LazyFrame:
+    """Load a binary dataframe file using polars lazy scanning."""
     if not file_path.exists():
         print(f"Error: File '{file_path}' not found", file=sys.stderr)
         sys.exit(1)
@@ -77,89 +118,125 @@ def _load_file(file_path: Path) -> nw.DataFrame | nw.LazyFrame:
     suffix = file_path.suffix.lower()
     try:
         if suffix == ".parquet":
-            return nw.scan_parquet(str(file_path))
+            return pl.scan_parquet(file_path)
         if suffix in {".feather", ".arrow", ".ipc"}:
-            # Try polars for lazy scanning first
-            try:
-                import polars as pl
-
-                return nw.from_native(pl.scan_ipc(str(file_path)), eager=False)
-            except ImportError:
-                # Fallback to pyarrow
-                try:
-                    import pyarrow.feather as pf
-
-                    return nw.from_native(pf.read_table(str(file_path)))
-                except ImportError:
-                    print(
-                        f"Error: To read {suffix} files, please install 'polars' or 'pyarrow'.",
-                        file=sys.stderr,
-                    )
-                    sys.exit(1)
+            return pl.scan_ipc(file_path)
 
         print(
             f"Error: Unsupported or non-binary file type '{suffix}'.\n"
-            "nwgrep CLI is optimized for binary formats (Parquet, Feather, IPC).\n"
+            "nwgrep CLI supports: .parquet, .feather, .arrow, .ipc\n"
             "For text files (CSV, TSV, TXT), use standard 'grep' or 'ripgrep'.",
             file=sys.stderr,
         )
         sys.exit(1)
-    except Exception as e:  # noqa: BLE001
+    except OSError as e:
         print(f"Error reading file: {e}", file=sys.stderr)
         sys.exit(1)
 
 
-def _write_ndjson(native_df: Any) -> None:
-    """Write dataframe to ndjson format based on engine."""
-    if hasattr(native_df, "to_json"):  # pandas
-        print(native_df.to_json(orient="records", lines=True))
-    elif hasattr(native_df, "write_ndjson"):  # polars eager
-        import io
+def _validate_flags(args: argparse.Namespace) -> bool:
+    """Validate flag combinations and determine final regex mode.
 
-        buf = io.BytesIO()
-        native_df.write_ndjson(buf)
-        print(buf.getvalue().decode("utf-8").strip())
-    else:
+    Returns the final regex mode after resolving flag conflicts.
+    """
+    # Check for incompatible flag combinations
+    if args.fixed_strings and args.whole_word:
         print(
-            f"Error: NDJSON output not supported for backend {type(native_df)}",
+            "Error: -F/--fixed-strings and -w/--whole-word are incompatible",
             file=sys.stderr,
         )
+        print("Whole-word matching requires regex boundaries (\\b)", file=sys.stderr)
         sys.exit(1)
 
+    # Warn if both -F and -E are specified
+    if args.fixed_strings and args.regex:
+        print("Warning: -F/--fixed-strings overrides -E/--regex flag", file=sys.stderr)
 
-def _output_results(result: FrameT, args: argparse.Namespace) -> None:
+    # Determine final regex mode based on priority: -F > -w > -E > default
+    if args.fixed_strings:
+        return False  # Force literal
+    if args.whole_word:
+        return True  # Whole-word requires regex
+    return args.regex  # Use -E flag
+
+
+def _output_dataframe(df: pl.DataFrame, args: argparse.Namespace) -> None:
+    """Output a dataframe in the requested format."""
+    if args.format == "csv":
+        print(df.write_csv())
+    elif args.format == "tsv":
+        print(df.write_csv(separator="\t"))
+    elif args.format == "ndjson":
+        buf = io.BytesIO()
+        df.write_ndjson(buf)
+        print(buf.getvalue().decode("utf-8").strip())
+    else:  # table
+        print(df)
+
+
+def _output_files_with_matches(
+    result: pl.LazyFrame | pl.DataFrame, args: argparse.Namespace, file_path: Path
+) -> None:
+    """Handle files-with-matches output (-l flag)."""
+    if args.format != "table":
+        print(
+            "Warning: --format ignored when using -l/--files-with-matches",
+            file=sys.stderr,
+        )
+    # Check if there are any matches (short-circuit on first match)
+    has_matches = (
+        result.limit(1).collect().height > 0
+        if isinstance(result, pl.LazyFrame)
+        else len(result) > 0
+    )
+    if has_matches:
+        print(file_path)
+
+
+def _output_results(
+    result: pl.LazyFrame | pl.DataFrame | int, args: argparse.Namespace, file_path: Path
+) -> None:
     """Handle printing or streaming the filtered results."""
-    # Handle NDJSON streaming optimization for Polars
-    if args.format == "ndjson":
-        native_result = nw.to_native(result, pass_through=True)
-        if hasattr(native_result, "sink_ndjson") and not args.max_rows:
-            # True streaming sink for Polars LazyFrame
-            native_result.sink_ndjson(sys.stdout)
-            return
+    # Handle count output (just print the integer)
+    if isinstance(result, int):
+        if args.format != "table":
+            print("Warning: --format ignored when using --count", file=sys.stderr)
+        print(result)
+        return
 
-    # Collect results for other formats or if streaming is not available
-    result_df = result.collect() if isinstance(result, nw.LazyFrame) else result
+    # Handle files-with-matches output
+    if args.files_with_matches:
+        _output_files_with_matches(result, args, file_path)
+        return
+
+    # Handle NDJSON streaming for LazyFrame
+    if (
+        args.format == "ndjson"
+        and isinstance(result, pl.LazyFrame)
+        and not args.max_rows
+    ):
+        result.sink_ndjson(sys.stdout)
+        return
+
+    # Collect if lazy
+    df: pl.DataFrame = result.collect() if isinstance(result, pl.LazyFrame) else result
 
     # Limit rows if requested
     if args.max_rows:
-        result_df = nw.from_native(result_df).head(args.max_rows).to_native()
+        df = df.head(args.max_rows)
 
-    # Output results
-    native_df = nw.to_native(nw.from_native(result_df))
-    if args.format == "csv":
-        print(native_df.to_csv(index=False))
-    elif args.format == "tsv":
-        print(native_df.to_csv(sep="\t", index=False))
-    elif args.format == "ndjson":
-        _write_ndjson(native_df)
-    else:  # table
-        print(result_df)
+    _output_dataframe(df, args)
 
 
 def main() -> None:
     """Command-line interface for nwgrep."""
+    _check_polars()
+
     parser = _create_parser()
     args = parser.parse_args()
+
+    # Validate flags and get final regex mode
+    final_regex = _validate_flags(args)
 
     file_path = Path(args.file)
     df = _load_file(file_path)
@@ -167,17 +244,22 @@ def main() -> None:
     columns = args.columns.split(",") if args.columns else None
 
     try:
-        result = nwgrep(
+        # Use nwgrep with polars LazyFrame, get back polars (or int if count)
+        # we ignore the overload here because: the count parameter from argparse has
+        # type bool (not narrowed to Literal[True] or Literal[False])
+        result = nwgrep(  # type: ignore[no-matching-overload]
             df,
             args.pattern,
             columns=columns,
             case_sensitive=not args.ignore_case,
-            regex=args.regex,
+            regex=final_regex,
             invert=args.invert,
             whole_word=args.whole_word,
+            count=args.count,
+            exact=args.exact,
         )
-        _output_results(result, args)
-    except Exception as e:  # noqa: BLE001
+        _output_results(result, args, file_path)
+    except (ValueError, RuntimeError, OSError) as e:
         print(f"Error during search: {e}", file=sys.stderr)
         sys.exit(1)
 

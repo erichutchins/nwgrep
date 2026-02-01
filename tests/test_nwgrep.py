@@ -95,3 +95,249 @@ def test_null_handling(constructor: Callable[[dict[str, list[Any]]], Any]) -> No
     res_pd = to_pandas(result)
     assert len(res_pd) == 1
     assert res_pd["name"].to_numpy()[0] == "Alice"
+
+
+# Tests for count feature
+def test_count_basic(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    """Test basic count functionality."""
+    data = {"name": ["Alice", "Bob", "Eve"], "status": ["active", "locked", "active"]}
+    df = constructor(data)
+
+    count = nwgrep(df, "active", count=True)
+    assert count == 2
+    assert isinstance(count, int)
+
+
+def test_count_with_invert(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    """Test count with inverted match."""
+    data = {"col": ["foo", "bar", "baz"]}
+    df = constructor(data)
+
+    count = nwgrep(df, "foo", invert=True, count=True)
+    assert count == 2
+
+
+def test_count_no_matches(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    """Test count returns 0 for no matches."""
+    data = {"col": ["foo", "bar"]}
+    df = constructor(data)
+
+    count = nwgrep(df, "xyz", count=True)
+    assert count == 0
+
+
+def test_count_with_case_insensitive(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test count with case insensitive matching."""
+    data = {"status": ["Active", "ACTIVE", "locked"]}
+    df = constructor(data)
+
+    count = nwgrep(df, "active", case_sensitive=False, count=True)
+    assert count == 2
+
+
+# Tests for exact match feature
+def test_exact_match_fixed_strings(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with fixed strings (equality)."""
+    data = {"status": ["active", "user_active", "active_user"]}
+    df = constructor(data)
+
+    result = nwgrep(df, "active", exact=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 1
+    assert res_pd["status"].iloc[0] == "active"
+
+
+def test_exact_match_regex(constructor: Callable[[dict[str, list[Any]]], Any]) -> None:
+    """Test exact match with regex (anchored)."""
+    data = {"col": ["foo123", "bar456", "baz"]}
+    df = constructor(data)
+
+    result = nwgrep(df, "foo.*", exact=True, regex=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 1
+    assert res_pd["col"].iloc[0] == "foo123"
+
+
+def test_exact_match_case_insensitive(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with case insensitivity."""
+    data = {"status": ["Active", "ACTIVE", "active_user"]}
+    df = constructor(data)
+
+    result = nwgrep(df, "active", exact=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 2
+    assert set(res_pd["status"]) == {"Active", "ACTIVE"}
+
+
+def test_exact_match_multiple_patterns(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with multiple patterns (OR logic)."""
+    data = {"status": ["active", "locked", "pending", "user_active"]}
+    df = constructor(data)
+
+    result = nwgrep(df, ["active", "locked"], exact=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 2
+    assert set(res_pd["status"]) == {"active", "locked"}
+
+
+def test_exact_match_with_count(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match combined with count."""
+    data = {"status": ["active", "active", "user_active"]}
+    df = constructor(data)
+
+    count = nwgrep(df, "active", exact=True, count=True)
+    assert count == 2
+
+
+def test_exact_match_with_invert(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with invert."""
+    data = {"status": ["active", "user_active", "locked"]}
+    df = constructor(data)
+
+    result = nwgrep(df, "active", exact=True, invert=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 2
+    assert set(res_pd["status"]) == {"user_active", "locked"}
+
+
+def test_exact_match_with_nulls(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match handles nulls correctly."""
+    data = {"status": ["active", None, "active"]}
+    df = constructor(data)
+
+    result = nwgrep(df, "active", exact=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 2
+    assert all(res_pd["status"] == "active")
+
+
+def test_exact_match_no_matches(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with no matches returns empty."""
+    data = {"status": ["user_active", "active_user"]}
+    df = constructor(data)
+
+    result = nwgrep(df, "active", exact=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 0
+
+
+def test_exact_match_alternation(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with regex alternation."""
+    data = {"col": ["foo", "bar", "foobar", "baz"]}
+    df = constructor(data)
+
+    # Without (?:) grouping, ^foo|bar$ would match "foobar" (the ^foo part)
+    # With (?:) grouping, ^(?:foo|bar)$ correctly matches only "foo" and "bar"
+    result = nwgrep(df, "foo|bar", exact=True, regex=True)
+    res_pd = to_pandas(result)
+
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"foo", "bar"}
+
+
+def test_exact_match_with_existing_anchors(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with patterns that already contain anchors."""
+    data = {"col": ["foo", "bar", "foobar"]}
+    df = constructor(data)
+
+    # Patterns with existing anchors should still work correctly
+    # ^(?:^foo)$ is equivalent to ^foo$
+    result = nwgrep(df, "^foo", exact=True, regex=True)
+    assert len(to_pandas(result)) == 1
+
+    # ^(?:foo$)$ is equivalent to ^foo$
+    result = nwgrep(df, "foo$", exact=True, regex=True)
+    assert len(to_pandas(result)) == 1
+
+    # ^(?:^foo$)$ is equivalent to ^foo$
+    result = nwgrep(df, "^foo$", exact=True, regex=True)
+    assert len(to_pandas(result)) == 1
+
+
+def test_regex_case_insensitive_with_character_classes(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test that case-insensitive regex preserves character classes."""
+    data = {"col": ["ABC123", "abc456", "XYZ", "xyz", "123"]}
+    df = constructor(data)
+
+    # [A-Z]+ should match uppercase letters in case-sensitive mode
+    result = nwgrep(df, r"[A-Z]+", regex=True, case_sensitive=True)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"ABC123", "XYZ"}
+
+    # [A-Z]+ with case_sensitive=False should match both upper and lower
+    result = nwgrep(df, r"[A-Z]+", regex=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 4
+    assert set(res_pd["col"]) == {"ABC123", "abc456", "XYZ", "xyz"}
+
+
+def test_regex_case_insensitive_with_word_boundaries(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test case-insensitive regex with word boundaries."""
+    data = {"col": ["FOO bar", "foo bar", "foobar", "BAR baz"]}
+    df = constructor(data)
+
+    # \bFOO\b should match "FOO" as a whole word (case-insensitive)
+    result = nwgrep(df, r"\bFOO\b", regex=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"FOO bar", "foo bar"}
+
+
+def test_exact_match_regex_case_insensitive_with_anchors(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test exact match with pre-existing anchors and case-insensitive mode."""
+    data = {"col": ["FOO", "foo", "foobar", "barfoo"]}
+    df = constructor(data)
+
+    # ^FOO$ with exact=True and case_sensitive=False should match "FOO" and "foo"
+    result = nwgrep(df, "^FOO$", exact=True, regex=True, case_sensitive=False)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 2
+    assert set(res_pd["col"]) == {"FOO", "foo"}
+
+
+def test_regex_case_insensitive_with_inline_flags(
+    constructor: Callable[[dict[str, list[Any]]], Any],
+) -> None:
+    """Test that user-provided inline flags are preserved."""
+    data = {"col": ["Test", "TEST", "test", "other"]}
+    df = constructor(data)
+
+    # User provides (?i) flag explicitly - should work in case-sensitive mode
+    result = nwgrep(df, r"(?i)test", regex=True, case_sensitive=True)
+    res_pd = to_pandas(result)
+    assert len(res_pd) == 3
+    assert set(res_pd["col"]) == {"Test", "TEST", "test"}

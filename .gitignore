@@ -21,6 +21,7 @@ wheels/
 *.egg
 
 # Virtual environments
+.venv/
 venv/
 env/
 ENV/
@@ -37,6 +38,13 @@ htmlcov/
 *.swp
 *.swo
 
+# Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Documentation
+site/
+
 # OS
 .DS_Store
 Thumbs.db
+reference
