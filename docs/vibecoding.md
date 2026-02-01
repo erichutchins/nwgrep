@@ -26,6 +26,12 @@ This page documents the tools and AI agents used to develop nwgrep.
 
 Enhanced Claude capabilities within Zed for file operations, git integration, and terminal commands.
 
+### Roborev
+
+[roborev.io](https://www.roborev.io/)
+
+Continuous code review and refactoring. Uses a git-hook to run and evaluate each commit.
+
 ### Development Stack
 
 | Tool                | Purpose                   | Documentation                                                                       |
