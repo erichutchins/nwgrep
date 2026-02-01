@@ -69,7 +69,7 @@ jobs:
         run: uv run --locked ruff check src/nwgrep
       
       - name: Run ty
-        run: uvx run ty check src/nwgrep
+        run: uvx ty check src/nwgrep
 
   test-backends:
     name: Test ${{ matrix.backend }} backend
@@ -137,7 +137,7 @@ jobs:
               uv run --locked nwgrep --help
               # Create test file and run CLI
               uv run --locked python -c "import polars as pl; pl.DataFrame({'col': ['foo', 'bar']}).write_parquet('test.parquet')"
-              uv run --lockednwgrep "foo" test.parquet
+              uv run --locked nwgrep "foo" test.parquet
               ;;
             notebook)
               # Test great-tables import
