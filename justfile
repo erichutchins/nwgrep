@@ -88,3 +88,67 @@ examples:
     @echo "✓ Notebooks executed with outputs saved"
     @echo "  - examples/pandas/highlighting.ipynb"
     @echo "  - examples/polars/highlighting.ipynb"
+
+# Release a new version (launches GitHub Actions workflow)
+release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    echo "Current version: $(uv version --short)"
+    echo ""
+    echo "Select release type:"
+    echo "  1) patch (0.1.0 -> 0.1.1)"
+    echo "  2) minor (0.1.0 -> 0.2.0)"
+    echo "  3) major (0.1.0 -> 1.0.0)"
+    echo ""
+    read -p "Enter choice (1/2/3): " choice
+    
+    case "$choice" in
+        1) bump_type="patch" ;;
+        2) bump_type="minor" ;;
+        3) bump_type="major" ;;
+        *) echo "Invalid choice. Aborting."; exit 1 ;;
+    esac
+    
+    echo ""
+    echo "Will bump $bump_type version..."
+    uv version --bump "$bump_type" --dry-run
+    echo ""
+    read -p "Proceed with release? (y/N): " confirm
+    
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        echo "Release cancelled."
+        exit 0
+    fi
+    
+    echo ""
+    echo "Running CI checks..."
+    just ci
+    
+    echo ""
+    echo "Bumping version..."
+    uv version --bump "$bump_type"
+    
+    new_version=$(uv version --short)
+    echo ""
+    echo "✓ Version bumped to $new_version"
+    
+    echo ""
+    echo "Committing and tagging release..."
+    git add pyproject.toml
+    if [ -f uv.lock ]; then git add uv.lock; fi
+    git commit -m "Release v$new_version"
+    git tag -a "v$new_version" -m "Release v$new_version"
+    
+    echo ""
+    echo "Pushing to remote to trigger GitHub Actions..."
+    git push origin main && git push origin --tags
+    
+    echo ""
+    echo "🚀 Release v$new_version pushed!"
+    echo "GitHub Actions will now:"
+    echo "  1. Run cross-platform tests"
+    echo "  2. Publish to PyPI"
+    echo "  3. Create a GitHub Release with signed artifacts"
+    echo ""
+    echo "Monitor progress at: https://github.com/erichutchins/nwgrep/actions"
